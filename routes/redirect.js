@@ -13,11 +13,13 @@ redirect.post('/addBioserver', (req, res) => {
   if (req.body.bsIP) {
     var newBioserver = new BioserverId({
       bsIP: req.body.bsIP,
+      bsId: RedirectData.topBSId,
       count: 0,
       updated_at: new Date().toUTCString()
     });
 
     newBioserver.save().then(() => {
+      RedirectData.topBSId++;
       res.json({code: 200, message: 'New bioserver has been saved.'});
     }, (err) => {
       if (err.code === 11000) {
