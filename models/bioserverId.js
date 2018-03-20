@@ -6,13 +6,8 @@ var BioserverIdSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  bsID: {
-    type: Number,
-    required: true,
-    unique: true
-  },
   count: {
-    type: number
+    type: Number
   },
   updated_at: {
     type: Date, 
