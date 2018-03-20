@@ -6,6 +6,11 @@ var BioserverIdSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  bsId: {
+    type: Number,
+    required: true,
+    unique: true
+  },
   count: {
     type: Number
   },
