@@ -8,6 +8,17 @@ var app = require('../app');
 var debug = require('debug')('redirectserver:server');
 var http = require('http');
 
+const {BioserverId} = require('./../models/bioserverId');
+
+/**
+ * Global variables.
+ */
+
+RedirectData = {
+  topUserId: 1,
+  topBSId: 1
+};
+
 /**
  * Get port from environment and store in Express.
  */
@@ -87,4 +98,13 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+
+  BioserverId.find({}, null, {sort: {bsId: -1}, limit: 1}).then((bioservers) => {
+    if (bioservers.length === 1) {
+      RedirectData.topBSId = bioservers[0].bsId + 1;
+    }
+  }, (err) => {
+    console.log('Read DB error: ' + err);
+  });
+
 }
