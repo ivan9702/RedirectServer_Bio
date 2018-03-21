@@ -15,8 +15,9 @@ const {BioserverId} = require('./../models/bioserverId');
  */
 
 RedirectData = {
-  topUserId: 1,
-  topBSId: 1
+  lastUserId: 1,
+  lastBSId: 1,
+  AddFPServer: ''
 };
 
 /**
@@ -101,7 +102,8 @@ function onListening() {
 
   BioserverId.find({}, null, {sort: {bsId: -1}, limit: 1}).then((bioservers) => {
     if (bioservers.length === 1) {
-      RedirectData.topBSId = bioservers[0].bsId + 1;
+      RedirectData.lastBSId = bioservers[0].bsId + 1;
+      RedirectData.AddFPServer = bioservers[0].bsIP;
     }
   }, (err) => {
     console.log('Read DB error: ' + err);
