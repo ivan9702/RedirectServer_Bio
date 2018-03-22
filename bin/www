@@ -9,6 +9,7 @@ var debug = require('debug')('redirectserver:server');
 var http = require('http');
 
 const {BioserverId} = require('./../models/bioserverId');
+const {UserFP} = require('./../models/userFP');
 
 /**
  * Global variables.
@@ -17,7 +18,8 @@ const {BioserverId} = require('./../models/bioserverId');
 RedirectData = {
   lastUserId: 1,
   lastBSId: 1,
-  AddFPServer: ''
+  AddFPServerIP: '',
+  AddFPServerId: 0
 };
 
 /**
@@ -100,13 +102,28 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 
-  BioserverId.find({}, null, {sort: {bsId: -1}, limit: 1}).then((bioservers) => {
-    if (bioservers.length === 1) {
-      RedirectData.lastBSId = bioservers[0].bsId + 1;
-      RedirectData.AddFPServer = bioservers[0].bsIP;
-    }
-  }, (err) => {
-    console.log('Read DB error: ' + err);
-  });
+  var findLastBSId = BioserverId.find({}, null, {sort: {bsId: -1}, limit: 1});
+  var findLastUserId = UserFP.find({}, null, {sort: {userId: -1}, limit: 1});
 
+  Promise.all([findLastBSId, findLastUserId]).then((values) => {
+    if (1 === values[0].length) {
+      let lastBioserver = values[0][0];
+      // update the lastBSId
+      RedirectData.lastBSId = lastBioserver.bsId + 1;
+      RedirectData.AddFPServerIP = lastBioserver.bsIP;
+      RedirectData.AddFPServerId = lastBioserver.bsId;
+      console.log('lastBSId: ' + RedirectData.lastBSId);
+      console.log('AddFPServerIP: ' + RedirectData.AddFPServerIP);
+      console.log('AddFPServerId: ' + RedirectData.AddFPServerId);
+    }
+
+    if (1 === values[1].length) {
+      let lastUser = values[1][0];
+      // update the lastUserId
+      RedirectData.lastUserId = lastUser.userId + 1;
+      console.log('lastUserId: ' + RedirectData.lastUserId);
+    }
+  }).catch((reason) => {
+    console.log('Read DB error: ' + reason);
+  });
 }
