@@ -14,14 +14,14 @@ redirect.get('/', function(req, res, next) {
 
 redirect.post('/addBioserver', (req, res) => {
   if (req.body.bsIP) {
-    var newBioserver = new BioserverId({
+    let newBioserver = new BioserverId({
       bsIP: req.body.bsIP,
       bsId: RedirectData.lastBSId,
       count: 0,
       updated_at: new Date().toUTCString()
     });
 
-    var errorFlag = 0;
+    let errorFlag = 0;
     newBioserver.save().then(() => {
       errorFlag = 1;
       let bioserverURL = req.body.bsIP + '/api/getServerInfo';
@@ -29,6 +29,12 @@ redirect.post('/addBioserver', (req, res) => {
     }).then((response) => {
       if (200 === response.data.code) {
         if (0 === response.data.count) {
+          RedirectData.bioservers.push({
+            bsIP: req.body.bsIP,
+            bsId: RedirectData.lastBSId,
+            count: 0
+          });
+          console.log('RedirectData.bioservers: ' + JSON.stringify(RedirectData.bioservers, null, 2));
           RedirectData.lastBSId++;
           res.json({code: 200, message: 'New bioserver has been saved.'});
         } else {

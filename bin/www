@@ -19,7 +19,8 @@ RedirectData = {
   lastUserId: 1,
   lastBSId: 1,
   AddFPServerIP: '',
-  AddFPServerId: 0
+  AddFPServerId: 0,
+  bioservers: []
 };
 
 /**
@@ -102,19 +103,16 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 
-  var findLastBSId = BioserverId.find({}, null, {sort: {bsId: -1}, limit: 1});
-  var findLastUserId = UserFP.find({}, null, {sort: {userId: -1}, limit: 1});
+  let findLastBSId = BioserverId.find({}, null, {sort: {bsId: -1}, limit: 1});
+  let findLastUserId = UserFP.find({}, null, {sort: {userId: -1}, limit: 1});
+  let serverForEnroll = BioserverId.find({}, null, {sort: {count: 1}});
 
-  Promise.all([findLastBSId, findLastUserId]).then((values) => {
+  Promise.all([findLastBSId, findLastUserId, serverForEnroll]).then((values) => {
     if (1 === values[0].length) {
       let lastBioserver = values[0][0];
       // update the lastBSId
       RedirectData.lastBSId = lastBioserver.bsId + 1;
-      RedirectData.AddFPServerIP = lastBioserver.bsIP;
-      RedirectData.AddFPServerId = lastBioserver.bsId;
       console.log('lastBSId: ' + RedirectData.lastBSId);
-      console.log('AddFPServerIP: ' + RedirectData.AddFPServerIP);
-      console.log('AddFPServerId: ' + RedirectData.AddFPServerId);
     }
 
     if (1 === values[1].length) {
@@ -122,6 +120,17 @@ function onListening() {
       // update the lastUserId
       RedirectData.lastUserId = lastUser.userId + 1;
       console.log('lastUserId: ' + RedirectData.lastUserId);
+    }
+
+    if (0 !== values[2].length) {
+      for (let i = 0; i < values[2].length; i++) {
+        RedirectData.bioservers.push({
+          bsIP: values[2][i].bsIP,
+          bsId: values[2][i].bsId,
+          count: values[2][i].count
+        });
+      }
+      console.log('RedirectData.bioservers: ' + JSON.stringify(RedirectData.bioservers, null, 2));
     }
   }).catch((reason) => {
     console.log('Read DB error: ' + reason);
