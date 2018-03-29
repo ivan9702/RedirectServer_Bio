@@ -192,32 +192,41 @@ redirect.post('/identifyFP', (req, res) => {
       let candidates = [];
       let scores = [];
       responses.forEach((response) => {
-        console.log(response.data);
-        if (200 === response.data.code) {
+        if (20004 === response.data.code) {
           candidates.push(response.data.data);
           scores.push(response.data.data.score);
         }
       });
       if (0 !== scores.length) {
         let result = candidates[scores.indexOf(Math.max(...scores))];
-        console.log(result);
         UserFP.findOne({
           userId: result.userId,
           fpIndex: result.fpIndex
         }).then((userFP) => {
-          res.json({code: 200, message: `Minutiae Identified: ${userFP.clientUserId}`});
+          res.json({
+            code: 20004,
+            message: 'User is Identified.',
+            data: {
+              clientUserId: userFP.clientUserId,
+              fpIndex: result.fpIndex,
+              score: result.score
+            }
+          });
         }).catch((err) => {
-          res.json({code: 501, message: 'Error happens when try to map userId and clientUserId.'});
+          res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
         });
       } else {
-        res.json({code: 404, message: 'No User Identified with The Give Minutiae.'});
+        res.json({code: responses[0].data.code, message: responses[0].data.message});
       }   
     }).catch((err) => {
-      console.log('errorFlag: ' + errorFlag);
-      res.json({code: 501, message: 'May be Some Error on Input or Server.'});
+      if (1 === errorFlag) {
+        res.json({code: 50103, message: 'An Error happens when Linking Bioserver.'});
+      } else {
+        res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
+      }
     });
   } else {
-    res.json({code: 406, message: 'Required Columns Not Fullfilled.'});
+    res.json({code: 40603, message: 'Required Columns Not Fulfilled.'});
   }
 });
 
