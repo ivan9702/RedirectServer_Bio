@@ -69,7 +69,7 @@ redirect.post('/addBioserver', (req, res) => {
 redirect.use(serverExists);
 
 redirect.post('/enrollFP', (req, res) => {
-  if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.ClientUserId && req.body.fpIndex) {
+  if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId && req.body.fpIndex) {
     // sort bioservers by count
     RedirectData.bioservers.sort((a, b) => {
       return a.count - b.count;
@@ -80,7 +80,7 @@ redirect.post('/enrollFP', (req, res) => {
     let bioServerId = RedirectData.bioservers[0].bsId;
     let addFPIP = RedirectData.bioservers[0].bsIP;
     UserFP.find({
-      clientUserId: req.body.ClientUserId
+      clientUserId: req.body.clientUserId
     }).then((userFPs) => {
       if (0 !== userFPs.length) {
         // user exists
@@ -104,7 +104,7 @@ redirect.post('/enrollFP', (req, res) => {
       });
 
       let newUserFP = new UserFP({
-        clientUserId: req.body.ClientUserId,
+        clientUserId: req.body.clientUserId,
         userId: userId,
         fpIndex: req.body.fpIndex,
         bioServerId: bioServerId,
@@ -148,7 +148,7 @@ redirect.post('/enrollFP', (req, res) => {
       } else if (3 === errorFlag || 4 === errorFlag) {
         let recoverBioserId = BioserverId.findOneAndUpdate({bsId: bioServerId}, {$inc: {count: -1}}, {new: true});
         let recoverUserFP = UserFP.findOneAndRemove({
-          clientUserId: req.body.ClientUserId,
+          clientUserId: req.body.clientUserId,
           userId: userId,
           fpIndex: req.body.fpIndex,
           bioServerId: bioServerId
