@@ -230,4 +230,51 @@ redirect.post('/identifyFP', (req, res) => {
   }
 });
 
+redirect.post('/verify', (req, res) => {
+  if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId) {
+    let errorFlag = 0;
+    UserFP.find({
+      clientUserId: req.body.clientUserId
+    }).then((user) => {
+      errorFlag = 1;
+      if (0 !== user.length) {
+        const verifyServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === user[0].userId);
+        return axios.post(verifyServer.bsIP + '/api/verifyFP', {
+          userId: user[0].userId,
+          eSkey: req.body.eSkey,
+          iv: req.body.iv,
+          encMinutiae: req.body.encMinutiae
+        });
+      } else {
+        // no user matches the clientUserId
+        throw new Error('no match');
+      }
+    }).then((response) => {
+      errorFlag = 2;
+      let result = {
+        code: response.data.code,
+        message: response.data.message
+      };
+      if (20003 === response.data.code || 40301 === response.data.code) {
+        result.data = {clientUserId: req.body.clientUserId};
+        if (20003 === response.data.code) {
+          result.data.fpIndex = response.data.data.fpIndex;
+          result.data.score = response.data.data.score;
+        }
+      }
+      res.json(result);
+    }).catch((err) => {
+      if ('no match' === err.message) {
+        res.json({code: 40302, message: 'The User Has Not Enrolled Yet.'});
+      } else if (1 === errorFlag) {
+        res.json({code: 50103, message: 'An Error happens when Linking Bioserver.'});
+      } else {
+        res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
+      }
+    });
+  } else {
+    res.json({code: 40603, message: 'Required Columns Not Fulfilled.'});
+  }
+});
+
 module.exports = redirect;
