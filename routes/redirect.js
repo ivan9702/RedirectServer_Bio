@@ -277,4 +277,91 @@ redirect.post('/verify', (req, res) => {
   }
 });
 
+redirect.post('/delete', (req, res) => {
+  if (req.body.clientUserId && req.body.fpIndex) {
+    let errorFlag = 0;
+    let backupUserFP;
+    UserFP.findOneAndRemove({
+      clientUserId: req.body.clientUserId,
+      fpIndex: req.body.fpIndex
+    }).then((userFP) => {
+      errorFlag = 1;
+      if (userFP) {
+        // user's FP exists
+        backupUserFP = {
+          clientUserId: userFP.clientUserId,
+          userId: userFP.userId,
+          fpIndex: userFP.fpIndex,
+          bioServerId: userFP.bioServerId,
+          updated_at: userFP.updated_at
+        };
+        // update BioserverId
+        return BioserverId.findOneAndUpdate({bsId: userFP.bioServerId}, {$inc: {count: -1}}, {new: true});
+      } else {
+        // the user's FP does not exist
+        throw new Error('not exists');
+      }
+    }).then((bioserver) => {
+      errorFlag = 2;
+      return axios.post(bioserver.bsIP + '/api/deleteFP', {
+        userId: backupUserFP.userId,
+        fpIndex: req.body.fpIndex
+      });
+    }).then((response) => {
+      errorFlag = 3;
+      let result = {code: 0, message: ''};
+      if (20002 === response.data.code || 40401 === response.data.code || 40402 === response.data.code) {
+        // update RedirectData.bioservers
+        RedirectData.bioservers.forEach((bioserver) => {
+          if (bioserver.bsId === backupUserFP.bioServerId) {
+            bioserver.count--;
+          }
+        });
+        result.code = response.data.code;
+        result.message = response.data.message;
+        if (20002 === response.data.code) {
+          result.data = {clientUserId: req.body.clientUserId, fpIndex: req.body.fpIndex};
+        }
+        res.json(result);
+      } else {
+        throw new Error(JSON.stringify({code: response.data.code, message: response.data.message}));
+      }
+    }).catch((err) => {
+      // 1. error for UserFP.findOneAndRemove
+      // 2. 'no exists'
+      // 3. errorFlag === 1: error for update bioserverId -> new UserFP.save()
+      // 4. errorFlag === 2: axios error -> new UserFP.save() & update bioserverId
+      // 5. errorFlag === 3 -> new UserFP.save() & update bioserverId
+      if ('not exists' === err.message) {
+        res.json({code: 40404, message: 'The Specified User Id and FP Index Number Does Not Exist.'});
+      } else if (1 === errorFlag || 2 === errorFlag || 3 === errorFlag) {
+        let recoverUserFP = new UserFP(backupUserFP).save();
+        let recoverise = [];
+        recoverise.push(recoverUserFP);
+        if (2 === errorFlag || 3 === errorFlag) {
+          let recoverBioserId = BioserverId.findOneAndUpdate({bsId: backupUserFP.bioServerId}, {$inc: {count: 1}}, {new: true});
+          recoverise.push(recoverBioserId);
+        }
+        Promise.all(recoverise).then(() => {
+          throw new Error('501');
+        }).catch((error) => {
+          if (2 === errorFlag) {
+            res.json({code: 50103, message: 'An Error happens when Linking Bioserver.'});
+          } else if (3 === errorFlag) {
+            let errObj = JSON.parse(err.message);
+            res.json({code: errObj.code, message: errObj.message});
+          } else {
+            res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
+          }
+        });
+      } else {
+        console.log(err);
+        res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
+      }
+    });
+  } else {
+    res.json({code: 40603, message: 'Required Columns Not Fulfilled.'});
+  }
+});
+
 module.exports = redirect;
