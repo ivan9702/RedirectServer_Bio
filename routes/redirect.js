@@ -68,7 +68,7 @@ redirect.post('/addBioserver', (req, res) => {
 
 redirect.use(serverExists);
 
-redirect.post('/enrollFP', (req, res) => {
+redirect.post('/enroll', (req, res) => {
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId && req.body.fpIndex) {
     // sort bioservers by count
     RedirectData.bioservers.sort((a, b) => {
@@ -175,7 +175,7 @@ redirect.post('/enrollFP', (req, res) => {
   }
 });
 
-redirect.post('/identifyFP', (req, res) => {
+redirect.post('/identify', (req, res) => {
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae) {
     let errorFlag = 0;
     BioserverId.find({}).then((bioservers) => {
