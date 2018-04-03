@@ -7,9 +7,11 @@
 var app = require('../app');
 var debug = require('debug')('redirectserver:server');
 var http = require('http');
+const https = require('https');
 
 const {BioserverId} = require('./../models/bioserverId');
 const {UserFP} = require('./../models/userFP');
+const {sslOptions} = require('./../sslLicense');
 
 /**
  * Global variables.
@@ -37,12 +39,21 @@ app.set('port', port);
 var server = http.createServer(app);
 
 /**
+ * Create HTTPS server.
+ */
+
+const httpsServer = https.createServer(sslOptions, app);
+
+/**
  * Listen on provided port, on all network interfaces.
  */
 
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
+const httpsPort = process.env.MYHTTPSPORT || 8443;
+httpsServer.listen(httpsPort);
 
 /**
  * Normalize a port into a number, string, or false.
