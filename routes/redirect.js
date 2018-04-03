@@ -1,11 +1,13 @@
 var express = require('express');
 const axios = require('axios');
+const https = require('https');
 
 const {BioserverId} = require('./../models/bioserverId');
 const {UserFP} = require('./../models/userFP');
 const serverExists = require('./middleware/serverExists');
 
 var redirect = express.Router();
+const agent = new https.Agent({rejectUnauthorized: false});
 
 /* GET users listing. */
 redirect.get('/', function(req, res, next) {
@@ -26,7 +28,7 @@ redirect.post('/addBioserver', (req, res) => {
     newBioserver.save().then(() => {
       errorFlag = 1;
       let bioserverURL = req.body.bsIP + '/api/getServerInfo';
-      return axios.get(bioserverURL);
+      return axios.get(bioserverURL, {httpsAgent: agent});
     }).then((response) => {
       if (200 === response.data.code) {
         if (0 === response.data.count) {
@@ -122,7 +124,7 @@ redirect.post('/enroll', (req, res) => {
         eSkey: req.body.eSkey,
         iv: req.body.iv,
         encMinutiae: req.body.encMinutiae
-      });
+      }, {httpsAgent: agent});
     }).then((response) => {
       errorFlag = 4;
       req.logInfo.userId = userId;
@@ -188,7 +190,7 @@ redirect.post('/identify', (req, res) => {
           eSkey: req.body.eSkey,
           iv: req.body.iv,
           encMinutiae: req.body.encMinutiae
-        });
+        }, {httpsAgent: agent});
       });
       return axios.all(axiosArray);
     }).then((responses) => {
@@ -254,7 +256,7 @@ redirect.post('/verify', (req, res) => {
           eSkey: req.body.eSkey,
           iv: req.body.iv,
           encMinutiae: req.body.encMinutiae
-        });
+        }, {httpsAgent: agent});
       } else {
         // no user matches the clientUserId
         throw new Error('no match');
@@ -318,7 +320,7 @@ redirect.post('/delete', (req, res) => {
       return axios.post(bioserver.bsIP + '/api/deleteFP', {
         userId: backupUserFP.userId,
         fpIndex: req.body.fpIndex
-      });
+      }, {httpsAgent: agent});
     }).then((response) => {
       req.logInfo.userId = backupUserFP.userId;
       errorFlag = 3;
