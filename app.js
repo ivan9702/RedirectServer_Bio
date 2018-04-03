@@ -6,8 +6,10 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+const mung = require('express-mung');
 
 var {mongoose} = require('./db/mongoose');
+const {EventLog} = require('./models/eventLog');
 var index = require('./routes/index');
 var redirect = require('./routes/redirect');
 
@@ -24,6 +26,31 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(mung.json(
+  function transform(body, req, res) {
+    res.on('finish', () => {
+      if (req.baseUrl === '/redirect') {
+        const reqPath = req.path;
+        const clientUserId = (req.body.clientUserId) ? req.body.clientUserId : null;
+        const fpIndex = (req.body.fpIndex) ? req.body.fpIndex : null;
+        const userId = (req.logInfo.userId) ? req.logInfo.userId : null;
+        const userInfo = {clientUserId, fpIndex, userId};
+        const resBody = body;
+        const bsIP = (req.logInfo.bsIP) ? req.logInfo.bsIP : null;
+        let eventTime = new Date();
+
+        let newEventLog = new EventLog({reqPath, userInfo, resBody, bsIP, eventTime: eventTime.toUTCString()});
+        newEventLog.save().then(() => {
+          // console.log('eventlog saved.');
+        }).catch((err) => {
+          console.log('ERROR: ', err);
+        });
+      } else {
+        return;
+      }
+    });
+  }
+));
 
 app.use('/', index);
 app.use('/redirect', redirect);

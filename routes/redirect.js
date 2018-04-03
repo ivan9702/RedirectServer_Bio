@@ -13,6 +13,7 @@ redirect.get('/', function(req, res, next) {
 });
 
 redirect.post('/addBioserver', (req, res) => {
+  req.logInfo = {};
   if (req.body.bsIP) {
     let newBioserver = new BioserverId({
       bsIP: req.body.bsIP,
@@ -114,6 +115,7 @@ redirect.post('/enroll', (req, res) => {
       return Promise.all([newUserFP, updatedBsId]);
     }).then((results) => {
       errorFlag = 3;
+      req.logInfo.bsIP = addFPIP;
       return axios.post(addFPIP + '/api/addFP', {
         userId: userId,
         fpIndex: req.body.fpIndex,
@@ -123,6 +125,7 @@ redirect.post('/enroll', (req, res) => {
       });
     }).then((response) => {
       errorFlag = 4;
+      req.logInfo.userId = userId;
       if (20001 === response.data.code) {
         if (userId === RedirectData.lastUserId) {
           RedirectData.lastUserId++;
@@ -188,7 +191,8 @@ redirect.post('/identify', (req, res) => {
         });
       });
       return axios.all(axiosArray);
-    }).then((responses) => {    
+    }).then((responses) => {
+      errorFlag = 2;
       let candidates = [];
       let scores = [];
       responses.forEach((response) => {
@@ -203,6 +207,9 @@ redirect.post('/identify', (req, res) => {
           userId: result.userId,
           fpIndex: result.fpIndex
         }).then((userFP) => {
+          let targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === userFP.bioServerId);
+          req.logInfo.bsIP = targetServer.bsIP;
+          req.logInfo.userId = userFP.userId;
           res.json({
             code: 20004,
             message: 'User is Identified.',
@@ -231,6 +238,7 @@ redirect.post('/identify', (req, res) => {
 });
 
 redirect.post('/verify', (req, res) => {
+  let userIdForLog;
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId) {
     let errorFlag = 0;
     UserFP.find({
@@ -239,6 +247,8 @@ redirect.post('/verify', (req, res) => {
       errorFlag = 1;
       if (0 !== user.length) {
         const verifyServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === user[0].userId);
+        req.logInfo.bsIP = verifyServer.bsIP;
+        userIdForLog = user[0].userId;
         return axios.post(verifyServer.bsIP + '/api/verifyFP', {
           userId: user[0].userId,
           eSkey: req.body.eSkey,
@@ -250,6 +260,7 @@ redirect.post('/verify', (req, res) => {
         throw new Error('no match');
       }
     }).then((response) => {
+      req.logInfo.userId = userIdForLog;
       errorFlag = 2;
       let result = {
         code: response.data.code,
@@ -303,11 +314,13 @@ redirect.post('/delete', (req, res) => {
       }
     }).then((bioserver) => {
       errorFlag = 2;
+      req.logInfo.bsIP = bioserver.bsIP;
       return axios.post(bioserver.bsIP + '/api/deleteFP', {
         userId: backupUserFP.userId,
         fpIndex: req.body.fpIndex
       });
     }).then((response) => {
+      req.logInfo.userId = backupUserFP.userId;
       errorFlag = 3;
       let result = {code: 0, message: ''};
       if (20002 === response.data.code || 40401 === response.data.code || 40402 === response.data.code) {
