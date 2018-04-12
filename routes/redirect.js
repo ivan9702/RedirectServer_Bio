@@ -248,7 +248,7 @@ redirect.post('/verify', (req, res) => {
     }).then((user) => {
       errorFlag = 1;
       if (0 !== user.length) {
-        const verifyServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === user[0].userId);
+        const verifyServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === user[0].bioServerId);
         req.logInfo.bsIP = verifyServer.bsIP;
         userIdForLog = user[0].userId;
         return axios.post(verifyServer.bsIP + '/api/verifyFP', {
