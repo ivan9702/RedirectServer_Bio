@@ -268,12 +268,8 @@ redirect.post('/verify', (req, res) => {
         code: response.data.code,
         message: response.data.message
       };
-      if (20003 === response.data.code || 40301 === response.data.code) {
-        result.data = {clientUserId: req.body.clientUserId};
-        if (20003 === response.data.code) {
-          result.data.fpIndex = response.data.data.fpIndex;
-          result.data.score = response.data.data.score;
-        }
+      if (20003 === response.data.code) {
+        result.data = {fpIndex: response.data.data.fpIndex, score: response.data.data.score};
       }
       res.json(result);
     }).catch((err) => {
@@ -334,9 +330,6 @@ redirect.post('/delete', (req, res) => {
         });
         result.code = response.data.code;
         result.message = response.data.message;
-        if (20002 === response.data.code) {
-          result.data = {clientUserId: req.body.clientUserId, fpIndex: req.body.fpIndex};
-        }
         res.json(result);
       } else {
         throw new Error(JSON.stringify({code: response.data.code, message: response.data.message}));
