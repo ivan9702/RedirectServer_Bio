@@ -6,65 +6,65 @@ block pageCSS
 block content
   ol.breadcrumb.pull-right
     li
-      a(href= '/') home
+      a(href= '/') #{t('home')}
     li.active
-      a(href='javascript:;') serverStatus
+      a(href='javascript:;') #{t('serverStatus')}
   h1.page-header
-    | BioServer
+    | RedirectServer
     small realtime status
   .row
     .col-md-4.col-sm-6
       .widget.widget-stats.bg-green
         .stats-icon.stats-icon-lg
           i.fa.fa-globe.fa-fw
-        .stats-title todaysCalls
+        .stats-title #{t('todaysCalls')}
         .stats-number
           | #{todayAPICallAmount}
           small  / #{todayAPICallPercent} %
         .stats-progress.progress
           .progress-bar(style='width: #{todayAPICallPercent}%;')
         .stats-desc
-          | cumulativeCalls：#{totalAPICallAmount} times
+          | #{t('cumulativeCalls')}：#{totalAPICallAmount} #{t('times')}
     .col-md-4.col-sm-6
       .widget.widget-stats.bg-purple
         .stats-icon.stats-icon-lg
           i.fa.fa-database.fa-fw
-        .stats-title countInDB
+        .stats-title #{t('countInDB')}
         .stats-number
           | #{totalFPAmount}
           small  / #{totalFPAmountPercent} %
         .stats-progress.progress
           .progress-bar(style='width: #{totalFPAmountPercent}%;')
-        .stats-desc DBConnection：#{databaseLink}
+        .stats-desc #{t('DBConnection')}：#{databaseLink}
     .col-md-4.col-sm-6
     if todayErrCallPercent > 5
       .widget.widget-stats.bg-red
         .stats-icon.stats-icon-lg
           i.fa.fa-exclamation-triangle.fa-fw
-        .stats-title todaysAbnormalCalls
+        .stats-title #{t('todaysAbnormalCalls')}
         .stats-number
           | #{todayErrCallAmount}
           small  / #{todayErrCallPercent} %
         .stats-progress.progress
           .progress-bar(style='width: #{todayErrCallPercent}%;')
-        .stats-desc totalAbnormalCalls：#{totalErrCallAmount} times
+        .stats-desc #{t('totalAbnormalCalls')}：#{totalErrCallAmount} #{t('times')}
     else
       .widget.widget-stats.bg-black
         .stats-icon.stats-icon-lg
           i.fa.fa-exclamation-triangle.fa-fw
-        .stats-title todaysAbnormalCalls
+        .stats-title #{t('todaysAbnormalCalls')}
         .stats-number
           | #{todayErrCallAmount}
           small  / #{todayErrCallPercent} %
         .stats-progress.progress
           .progress-bar(style='width: #{todayErrCallPercent}%;')
-        .stats-desc totalAbnormalCalls：#{totalErrCallAmount} times
+        .stats-desc #{t('totalAbnormalCalls')}：#{totalErrCallAmount} #{t('times')}
   .row
     .col-md-4
       .panel.panel-inverse(data-sortable-id='index-1')
         .panel-heading
           .panel-heading-btn
-            | todaysPercentage
+            | #{t('todaysPercentage')}
           h4.panel-title Code Format
         .list-group
           a.list-group-item.list-group-item-inverse.text-ellipsis(href='#')
@@ -86,7 +86,7 @@ block content
       .widget-chart.with-sidebar.bg-black
         .widget-chart-content
           h4.chart-title
-            | weeklyReport
+            | #{t('weeklyReport')}
             small
               i.fa.fa-circle-o.fa-fw.text-primary.m-r-5
               span(style='color:white;') Add + Delete
@@ -100,7 +100,7 @@ block content
         .widget-chart-sidebar.bg-black-darker
           .chart-number
             | #{totalAPICallAmount}
-            small totalAPICalls
+            small #{t('totalAPICalls')}
           #visitors-donut-chart(style='height: 160px')
           ul.chart-legend
             li

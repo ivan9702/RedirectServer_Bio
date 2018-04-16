@@ -2,7 +2,7 @@ doctype html
 html
   head
     meta(charset='utf-8')
-    title= title
+    title= 'RedirectServer：' + t(title)
     link(rel='stylesheet', href='/stylesheets/style.css')
     meta(content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no', name='viewport')
     meta(content='', name='description')
@@ -37,15 +37,15 @@ html
     #sidebar.sidebar
       div(data-scrollbar='true', data-height='100%')
         ul.nav
-          li.nav-header BioServer
+          li.nav-header RedirectServer
           li(class="#{current === 0 ? 'active' : ''}")
             a(href='/')
               i.fa.fa-file-code-o
-              span serverStatus
+              span #{t('serverStatus')}
           li(class="#{current === 5 ? 'active' : ''}")
             a(href='/log/restful-api')
               i.fa.fa-archive
-              span serverLogCheck
+              span #{t('serverLogCheck')}
           li(class="#{current === 8 ? 'active' : ''}")
             a.sidebar-minify-btn(href='javascript:;', data-click='sidebar-minify')
               i.fa.fa-angle-double-left
