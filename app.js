@@ -7,6 +7,10 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 const mung = require('express-mung');
+// multi-language
+const i18n = require('i18next');
+const i18nFsBackend = require('i18next-node-fs-backend');
+const i18nMiddleware = require('i18next-express-middleware');
 
 var {mongoose} = require('./db/mongoose');
 const {EventLog} = require('./models/eventLog');
@@ -14,6 +18,18 @@ var index = require('./routes/index');
 var redirect = require('./routes/redirect');
 
 var app = express();
+
+// multi-language setup
+i18n.use(i18nMiddleware.LanguageDetector)
+    .use(i18nFsBackend)
+    .init({
+      fallbackLng: 'en',
+      backend: {
+        loadPath: __dirname + '/locales/{{lng}}/translation.json'
+      }
+    });
+
+app.use(i18nMiddleware.handle(i18n, {}));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
