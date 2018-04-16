@@ -12,18 +12,219 @@ const https = require('https');
 const {BioserverId} = require('./../models/bioserverId');
 const {UserFP} = require('./../models/userFP');
 const {sslOptions} = require('./../sslLicense');
+const {EventLog} = require('./../models/eventLog');
 
 /**
  * Global variables.
  */
 
+Date.prototype.yyyymmdd = function() {
+  var yyyy = this.getFullYear().toString();
+  var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+  var dd  = this.getDate().toString();
+
+  return yyyy + '-' + (mm[1]?mm:"0"+mm[0]) + '-' + (dd[1]?dd:"0"+dd[0]);
+};
+
+Date.prototype.yyyymm = function() {
+  var yyyy = this.getFullYear().toString();
+  var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+  //var dd  = this.getDate().toString();
+
+  return yyyy + '-' + (mm[1]?mm:"0"+mm[0]);
+};
+
+numberWithCommas = function(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+let get7days = function(today){
+  let sevenDays = [];
+  for(let i = 0; i < 7; i++){
+    let dateToPush = new Date(today);
+    dateToPush.setDate(today.getDate() - i);
+    dateToPush = dateToPush.yyyymmdd();
+    sevenDays.push(dateToPush);
+  }
+  return sevenDays;
+};
+
+// a and b are javascript Date objects
+function dateDiffInDays(a, b) {
+  let _MS_PER_DAY = 1000 * 60 * 60 * 24;
+  // Discard the time and time-zone information.
+  let utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+  let utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+
+  return Math.floor((utc2 - utc1) / _MS_PER_DAY);
+}
+
 RedirectData = {
   lastUserId: 1,
   lastBSId: 1,
-  AddFPServerIP: '',
-  AddFPServerId: 0,
   bioservers: []
 };
+
+BrowserInfo = {
+  today: '',
+  totalAPICallAmount: 0,
+  todayAPICallAmount: 0,
+  totalFPAmount: 0,
+  databaseLink: '',
+  totalErrCallAmount: 0,
+  todayErrCallAmount: 0,
+  totalIdentifyAmount: 0,
+  totalVerifyAmount: 0,
+  totalEnrollAmount: 0,
+  totalDeleteAmount: 0,
+  today200Amount: 0,
+  today403Amount: 0,
+  today404Amount: 0,
+  today406Amount: 0,
+  today501Amount: 0,
+  allMonths: [],
+  sevenDays: [],
+  sevenDayEnroll: [0,0,0,0,0,0,0],
+  sevenDayDelete: [0,0,0,0,0,0,0],
+  sevenDayVerify: [0,0,0,0,0,0,0],
+  sevenDayIdentify: [0,0,0,0,0,0,0],
+  sevenDayError: [0,0,0,0,0,0,0]
+};
+
+function resetBrowserInfo() {
+  BrowserInfo.today = '';
+  BrowserInfo.totalAPICallAmount = 0;
+  BrowserInfo.todayAPICallAmount = 0;
+  BrowserInfo.totalErrCallAmount = 0;
+  BrowserInfo.todayErrCallAmount = 0;
+  BrowserInfo.totalIdentifyAmount = 0;
+  BrowserInfo.totalVerifyAmount = 0;
+  BrowserInfo.totalEnrollAmount = 0;
+  BrowserInfo.totalDeleteAmount = 0;
+  BrowserInfo.today200Amount = 0;
+  BrowserInfo.today403Amount = 0;
+  BrowserInfo.today404Amount = 0;
+  BrowserInfo.today406Amount = 0;
+  BrowserInfo.today501Amount = 0;
+  BrowserInfo.allMonths = [];
+  BrowserInfo.sevenDays = [];
+  BrowserInfo.sevenDayEnroll = [0,0,0,0,0,0,0];
+  BrowserInfo.sevenDayDelete = [0,0,0,0,0,0,0];
+  BrowserInfo.sevenDayVerify = [0,0,0,0,0,0,0];
+  BrowserInfo.sevenDayIdentify = [0,0,0,0,0,0,0];
+  BrowserInfo.sevenDayError = [0,0,0,0,0,0,0];
+}
+
+function updateStatistics() {
+  resetBrowserInfo();
+  let todayDate = new Date();
+  todayDate.setHours(0,0,0,0);
+
+  let currentDate = todayDate.yyyymmdd();
+  let currentMonth = todayDate.yyyymm();
+  BrowserInfo.today = currentDate;
+  BrowserInfo.sevenDays = get7days(todayDate);
+  BrowserInfo.allMonths[0] = currentMonth;
+  let currentLogDateObj = new Date(todayDate);
+
+  EventLog.find({}, null, {sort: {eventTime: -1}}).then((eventlogs) => {
+    let initialPosition = 0;
+    eventlogs.forEach((eventlog) => {
+      BrowserInfo.totalAPICallAmount++;
+      if (eventlog.resBody.code > 40000) {
+        BrowserInfo.totalErrCallAmount++;
+      }
+      if(eventlog.eventTime.yyyymm() != currentMonth){
+        currentMonth = eventlog.eventTime.yyyymm();
+        BrowserInfo.allMonths.push(currentMonth);
+      }
+
+      if (eventlog.eventTime > todayDate) {
+        // today's log
+        BrowserInfo.todayAPICallAmount++;
+        switch(eventlog.resBody.code){
+          case 20001:
+          case 20002:
+          case 20003:
+          case 20004:
+            BrowserInfo.today200Amount++;
+            break;
+          case 40301:
+            BrowserInfo.today403Amount++;
+            BrowserInfo.todayErrCallAmount++;
+            break;
+          case 40401:
+          case 40402:
+          case 40403:
+            BrowserInfo.today404Amount++;
+            BrowserInfo.todayErrCallAmount++;
+            break;
+          case 40601:
+          case 40602:
+          case 40603:
+          case 40604:
+            BrowserInfo.today406Amount++;
+            BrowserInfo.todayErrCallAmount++;
+            break;
+          case 50101:
+          case 50102:
+            BrowserInfo.today501Amount++;
+            BrowserInfo.todayErrCallAmount++;
+            break;
+        }
+      } else {
+        if (eventlog.eventTime.yyyymmdd() !== currentDate){
+          // Date in the log changed
+          let basedDate = new Date(eventlog.eventTime);
+          basedDate.setHours(0,0,0,0);
+          // find the difference between 2 dates
+          var dayDiff =  dateDiffInDays(basedDate, currentLogDateObj);
+          initialPosition += dayDiff;
+          currentDate = eventlog.eventTime.yyyymmdd();
+          currentLogDateObj = new Date(eventlog.eventTime);
+        }
+      }
+
+      switch(eventlog.reqPath){
+        case "/verify":
+          BrowserInfo.totalVerifyAmount++;
+          break;
+        case "/identify":
+          BrowserInfo.totalIdentifyAmount++;
+          break;
+        case "/enroll":
+          BrowserInfo.totalEnrollAmount++;
+          break;
+        case "/delete":
+          BrowserInfo.totalDeleteAmount++;
+          break;
+      }
+
+      if (initialPosition < 7) {
+        if (eventlog.resBody.code > 40000) {
+          BrowserInfo.sevenDayError[initialPosition]++;
+        }
+        switch(eventlog.reqPath){
+          case "/enroll":
+            BrowserInfo.sevenDayEnroll[initialPosition]++;
+            break;
+          case "/delete":
+            BrowserInfo.sevenDayDelete[initialPosition]++;
+            break;
+          case "/verify":
+            BrowserInfo.sevenDayVerify[initialPosition]++;
+            break;
+          case "/identify":
+            BrowserInfo.sevenDayIdentify[initialPosition]++;
+            break;
+        }
+      }
+    });
+    console.log(BrowserInfo);
+  }).catch((err) => {
+    console.log(err);
+  });
+}
 
 /**
  * Get port from environment and store in Express.
@@ -146,4 +347,6 @@ function onListening() {
   }).catch((reason) => {
     console.log('Read DB error: ' + reason);
   });
+
+  updateStatistics();
 }
