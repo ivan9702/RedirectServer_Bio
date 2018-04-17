@@ -45,7 +45,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(mung.json(
   function transform(body, req, res) {
     res.on('finish', () => {
-      if (req.baseUrl === '/redirect' && (req.path !== '/' && req.path.substring(0,7) !== '/getLog')) {
+      if (req.baseUrl === '/redirect' && (req.path !== '/' && req.path.substring(0,7) !== '/getLog' && req.path.substring(0,7) !== '/getBio')) {
         const reqPath = req.path;
         const clientUserId = (req.body.clientUserId) ? req.body.clientUserId : null;
         const fpIndex = (req.body.fpIndex) ? req.body.fpIndex : null;
