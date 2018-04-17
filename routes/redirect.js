@@ -5,6 +5,7 @@ const https = require('https');
 const {BioserverId} = require('./../models/bioserverId');
 const {UserFP} = require('./../models/userFP');
 const serverExists = require('./middleware/serverExists');
+const {EventLog} = require('./../models/eventLog');
 
 var redirect = express.Router();
 const agent = new https.Agent({rejectUnauthorized: false});
@@ -12,6 +13,39 @@ const agent = new https.Agent({rejectUnauthorized: false});
 /* GET users listing. */
 redirect.get('/', function(req, res, next) {
   res.send('respond with a resource');
+});
+
+redirect.get('/getLog/:page*?', (req, res) => {
+  let pageNumber = 1;
+  if (req.params.page)
+    pageNumber = req.params.page;
+  
+  let skipNumber = 30 * (pageNumber - 1);
+  let resultArray = [];
+  let searchFilter = {};
+  if (req.query.code) {
+    searchFilter["resBody.code"] = {$gt: parseInt(req.query.code) * 100, $lt: parseInt(req.query.code) * 100 + 50};
+    // searchFilter["resBody.code"] = parseInt(req.query.code);
+  }
+  if(req.query.query)
+    searchFilter["$text"] = {$search: req.query.query};
+  //console.log(searchFilter);
+  EventLog.find(searchFilter, null, {skip: skipNumber, limit: 30, sort: {eventTime: -1}}).then((eventLoggs) => {
+    eventLoggs.forEach((eventLogg) => {
+      resultArray.push({
+        request: eventLogg.reqPath,
+        req1: eventLogg.userInfo && eventLogg.userInfo.userId ? eventLogg.userInfo.userId : 0,
+        req2: eventLogg.userInfo && eventLogg.userInfo.fpIndex ? eventLogg.userInfo.fpIndex : 0,
+        req3: eventLogg.userInfo && eventLogg.userInfo.clientUserId ? eventLogg.userInfo.clientUserId : '',
+        responseCode: eventLogg.resBody && eventLogg.resBody.code ? eventLogg.resBody.code : 0,
+        res1: eventLogg.resBody && eventLogg.resBody.message ? eventLogg.resBody.message : '',
+        res2: eventLogg.bsIP
+      });
+    });
+    res.json(resultArray);
+  }).catch((err) => {
+    res.json({code: 501, message: 'May be Some Error on Input or Server (/getLog)'});
+  });
 });
 
 redirect.post('/addBioserver', (req, res) => {
@@ -72,6 +106,7 @@ redirect.post('/addBioserver', (req, res) => {
 redirect.use(serverExists);
 
 redirect.post('/enroll', (req, res) => {
+  console.log(typeof req.body.fpIndex);
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId && req.body.fpIndex) {
     // sort bioservers by count
     RedirectData.bioservers.sort((a, b) => {

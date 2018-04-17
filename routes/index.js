@@ -52,4 +52,8 @@ router.get('/', function(req, res, next) {
   });
 });
 
+router.get('/log/restful-api', (req, res) => {
+  res.render('logRESTfulAPI', { title: 'serverLogCheck', current: 5, currentSub: 0});
+});
+
 module.exports = router;
