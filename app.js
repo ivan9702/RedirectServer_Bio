@@ -45,7 +45,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(mung.json(
   function transform(body, req, res) {
     res.on('finish', () => {
-      if (req.baseUrl === '/redirect') {
+      if (req.baseUrl === '/redirect' && (req.path !== '/' && req.path.substring(0,7) !== '/getLog')) {
         const reqPath = req.path;
         const clientUserId = (req.body.clientUserId) ? req.body.clientUserId : null;
         const fpIndex = (req.body.fpIndex) ? req.body.fpIndex : null;
@@ -57,7 +57,64 @@ app.use(mung.json(
 
         let newEventLog = new EventLog({reqPath, userInfo, resBody, bsIP, eventTime: eventTime.toUTCString()});
         newEventLog.save().then(() => {
-          // console.log('eventlog saved.');
+          if (eventTime.yyyymmdd() != BrowserInfo.today){
+            updateStatistics();
+            console.log('not the same');
+          } else {
+            BrowserInfo.totalAPICallAmount++;
+            BrowserInfo.todayAPICallAmount++;
+
+            if (resBody.code > 40000) {
+              BrowserInfo.totalErrCallAmount++;
+              BrowserInfo.todayErrCallAmount++;
+              BrowserInfo.sevenDayError[0]++;
+            }
+
+            switch(resBody.code){
+              case 20001:
+              case 20002:
+              case 20003:
+              case 20004:
+                BrowserInfo.today200Amount++;
+                break;
+              case 40301:
+                BrowserInfo.today403Amount++;
+                break;
+              case 40401:
+              case 40402:
+              case 40403:
+                BrowserInfo.today404Amount++;
+                break;
+              case 40601:
+              case 40602:
+              case 40603:
+              case 40604:
+                BrowserInfo.today406Amount++;
+                break;
+              case 50101:
+              case 50102:
+                BrowserInfo.today501Amount++;
+                break;
+            }
+            switch(reqPath){
+              case "/enroll":
+                BrowserInfo.sevenDayEnroll[0]++;
+                BrowserInfo.totalEnrollAmount++;
+                break;
+              case "/delete":
+                BrowserInfo.sevenDayDelete[0]++;
+                BrowserInfo.totalDeleteAmount++;
+                break;
+              case "/verify":
+                BrowserInfo.sevenDayVerify[0]++;
+                BrowserInfo.totalVerifyAmount++;
+                break;
+              case "/identify":
+                BrowserInfo.sevenDayIdentify[0]++;
+                BrowserInfo.totalIdentifyAmount++;
+                break;
+            }
+          }
         }).catch((err) => {
           console.log('ERROR: ', err);
         });
