@@ -18,6 +18,7 @@ const EventLogSchema = new mongoose.Schema({
     default: Date.toUTCString
   }
 });
+EventLogSchema.index({'$**': 'text'});
 
 const EventLog = mongoose.model('EventLog', EventLogSchema);
 
