@@ -49,13 +49,13 @@ block content
                 th(ng-hide="showFunction") Bioserver IP
               tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2', ng-init="limit= 20")
                 td {{key+1}}
-                td(ng-bind="item.request")
-                td(ng-hide="showFunction", ng-bind="item.req1")
-                td(ng-hide="showFunction", ng-bind="item.req2")
-                td(ng-hide="showFunction", ng-bind="item.req3")
+                td(ng-bind="item.reqPath")
+                td(ng-hide="showFunction", ng-bind="item.userId")
+                td(ng-hide="showFunction", ng-bind="item.fpIndex")
+                td(ng-hide="showFunction", ng-bind="item.clientUserId")
                 td(ng-hide="showFunction", ng-bind="item.responseCode")
-                td(ng-hide="showFunction", ng-bind="item.res1")
-                td(ng-hide="showFunction", ng-bind="item.res2")
+                td(ng-hide="showFunction", ng-bind="item.message")
+                td(ng-hide="showFunction", ng-bind="item.bsIP")
             tbody
 
 block pageJS

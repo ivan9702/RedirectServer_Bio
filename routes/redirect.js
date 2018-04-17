@@ -30,17 +30,24 @@ redirect.get('/getLog/:page*?', (req, res) => {
   if(req.query.query)
     searchFilter["$text"] = {$search: req.query.query};
   //console.log(searchFilter);
-  EventLog.find(searchFilter, null, {skip: skipNumber, limit: 30, sort: {eventTime: -1}}).then((eventLoggs) => {
-    eventLoggs.forEach((eventLogg) => {
-      resultArray.push({
-        request: eventLogg.reqPath,
-        req1: eventLogg.userInfo && eventLogg.userInfo.userId ? eventLogg.userInfo.userId : 0,
-        req2: eventLogg.userInfo && eventLogg.userInfo.fpIndex ? eventLogg.userInfo.fpIndex : 0,
-        req3: eventLogg.userInfo && eventLogg.userInfo.clientUserId ? eventLogg.userInfo.clientUserId : '',
-        responseCode: eventLogg.resBody && eventLogg.resBody.code ? eventLogg.resBody.code : 0,
-        res1: eventLogg.resBody && eventLogg.resBody.message ? eventLogg.resBody.message : '',
-        res2: eventLogg.bsIP
-      });
+  EventLog.find(searchFilter, null, {skip: skipNumber, limit: 30, sort: {eventTime: -1}}).then((eventLogs) => {
+    eventLogs.forEach((eventLog) => {
+      let result = {
+        reqPath: eventLog.reqPath,
+        userId: eventLog.userInfo && eventLog.userInfo.userId ? eventLog.userInfo.userId : 0,
+        fpIndex: eventLog.userInfo && eventLog.userInfo.fpIndex ? eventLog.userInfo.fpIndex : 0,
+        clientUserId: eventLog.userInfo && eventLog.userInfo.clientUserId ? eventLog.userInfo.clientUserId : '',
+        responseCode: eventLog.resBody && eventLog.resBody.code ? eventLog.resBody.code : 0,
+        message: eventLog.resBody && eventLog.resBody.message ? eventLog.resBody.message : '',
+        bsIP: eventLog.bsIP ? eventLog.bsIP : ''
+      };
+      if (eventLog.reqPath === '/identify') {
+        result.clientUserId = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.clientUserId ? eventLog.resBody.data.clientUserId : '';
+        result.fpIndex = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.fpIndex ? eventLog.resBody.data.fpIndex : 0;
+      } else if (eventLog.reqPath === '/verify') {
+        result.fpIndex = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.fpIndex ? eventLog.resBody.data.fpIndex : 0;
+      }
+      resultArray.push(result);
     });
     res.json(resultArray);
   }).catch((err) => {
