@@ -55,6 +55,19 @@ redirect.get('/getLog/:page*?', (req, res) => {
   });
 });
 
+redirect.get('/getBio', (req, res) => {
+  let resultArray = [];
+  RedirectData.bioservers.forEach((bioserver) => {
+    resultArray.push({
+      bsIP: bioserver.bsIP,
+      bsId: bioserver.bsId,
+      count: bioserver.count
+    });
+  });
+
+  res.json(resultArray);
+});
+
 redirect.post('/addBioserver', (req, res) => {
   req.logInfo = {};
   if (req.body.bsIP) {

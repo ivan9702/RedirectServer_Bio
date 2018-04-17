@@ -47,6 +47,10 @@ html
               a(href='/log/restful-api')
                 i.fa.fa-archive
                 span #{t('serverLogCheck')}
+            li(class="#{current === 6 ? 'active' : ''}")
+              a(href='/log/bioServerInfo')
+                i.fa.fa-archive
+                span #{t('bioserverInfo')}
             li(class="#{current === 8 ? 'active' : ''}")
               a.sidebar-minify-btn(href='javascript:;', data-click='sidebar-minify')
                 i.fa.fa-angle-double-left

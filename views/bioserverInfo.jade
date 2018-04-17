@@ -1,0 +1,95 @@
+extends layout
+
+block pageCSS
+  link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+
+block content
+  ol.breadcrumb.pull-right
+    li
+      a(href= '/') #{t('home')}
+    li.active
+      a(href='javascript:;') #{t('serverLogCheck')}
+  h1.page-header
+    | Redirect Server
+    small Bioserver Info
+  .p-20
+    div(class='row', ng-app='listApp', ng-controller='listController')
+      .col-md-12
+        .email-content
+          table(class="table table-email", infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1',style="table-layout: fixed; width: 100%")
+            thead
+              tr
+                th #
+                th IP
+                th Id  
+                th FP count
+              tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2', ng-init="limit= 20")
+                td {{key+1}}
+                td
+                  a(ng-href="{{item.bsIP}}", ng-bind="item.bsIP", target='_blank')              
+                td(ng-bind="item.bsId")
+                td(ng-bind="item.count")
+            tbody
+
+block pageJS
+  script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js')
+  script(src='/js/ng-infinite-scroll.min.js')
+  script(src='/js/inbox.demo.min.js')
+  script(src='/js/apps.min.js')
+
+block onPageJS
+  script.
+    $(document).ready(function() {
+      App.init();
+      Inbox.init();
+    });
+    var listApp = angular.module('listApp', ['infinite-scroll']);
+    listApp.controller('listController', function($scope, Github) {
+      $scope.github = new Github({});
+      $scope.showFunction = false;
+      $scope.switchStatus = function(){
+        $scope.showFunction = !$scope.showFunction;
+      };
+      $scope.switchFilter = function(filter){
+        $scope.github = new Github(filter);
+        $scope.github.nextPage();
+      };
+      $scope.submitForm = function(){
+        $scope.github = new Github({query: $scope.queryString});
+        $scope.github.nextPage();
+      };
+      $scope.resetFilter = function(){
+        $scope.github = new Github({});
+        $scope.github.nextPage();
+        $scope.queryString = '';
+      }
+    });
+    listApp.factory('Github', function($http, $sce) {
+      var Github = function(filter) {
+        this.items = [];
+        this.busy = false;
+        this.after = 1;
+        console.log(filter);
+        if(filter.code)
+          this.code = filter.code;
+        if(filter.query)
+          this.query = filter.query;
+      };
+
+      Github.prototype.nextPage = function() {
+        if (this.busy) return;
+        this.busy = true;
+        var url = "/redirect/getBio/";
+        console.log(url);
+        $sce.trustAsResourceUrl(url);
+        $http.get(url).success(function(data) {
+          for (var i = 0; i < data.length; i++) {
+            this.items.push(data[i]);
+          }
+          this.after++;
+          this.busy = false;
+        }.bind(this));
+      };
+
+      return Github;
+    });

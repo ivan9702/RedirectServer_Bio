@@ -56,4 +56,8 @@ router.get('/log/restful-api', (req, res) => {
   res.render('logRESTfulAPI', { title: 'serverLogCheck', current: 5, currentSub: 0});
 });
 
+router.get('/log/bioServerInfo', (req, res) => {
+  res.render('bioserverInfo', { title: 'bioserverInfo', current: 6, currentSub: 0});
+});
+
 module.exports = router;
