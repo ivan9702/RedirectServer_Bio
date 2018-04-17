@@ -18,40 +18,41 @@ html
     block pageCSS
     script(src='/plugins/pace/pace.min.js')
   body
-    #header.header.navbar.navbar-default.navbar-fixed-top
-      .container-fluid
-        .navbar-header
-          a.navbar-brand(href='/')
-            span.navbar-logo
-            |  STARTEK
-        ul.nav.navbar-nav.navbar-right
-          li.dropdown.navbar-user
-            a.dropdown-toggle(href='javascript:;', data-toggle='dropdown')
-              span.hidden-xs About
-              b.caret
-            ul.dropdown-menu.animated.fadeInLeft
-              li
-                a(href='http://www.startek.com.tw/' target='_blank')
-                  span.badge.badge-danger.pull-right n
-                  | startek website
-    #sidebar.sidebar
-      div(data-scrollbar='true', data-height='100%')
-        ul.nav
-          li.nav-header RedirectServer
-          li(class="#{current === 0 ? 'active' : ''}")
-            a(href='/')
-              i.fa.fa-file-code-o
-              span #{t('serverStatus')}
-          li(class="#{current === 5 ? 'active' : ''}")
-            a(href='/log/restful-api')
-              i.fa.fa-archive
-              span #{t('serverLogCheck')}
-          li(class="#{current === 8 ? 'active' : ''}")
-            a.sidebar-minify-btn(href='javascript:;', data-click='sidebar-minify')
-              i.fa.fa-angle-double-left
-    .sidebar-bg
-    #content.content
-      block content
+    #page-container.page-sidebar-fixed
+      #header.header.navbar.navbar-default.navbar-fixed-top
+        .container-fluid
+          .navbar-header
+            a.navbar-brand(href='/')
+              span.navbar-logo
+              |  STARTEK
+          ul.nav.navbar-nav.navbar-right
+            li.dropdown.navbar-user
+              a.dropdown-toggle(href='javascript:;', data-toggle='dropdown')
+                span.hidden-xs About
+                b.caret
+              ul.dropdown-menu.animated.fadeInLeft
+                li
+                  a(href='http://www.startek.com.tw/' target='_blank')
+                    span.badge.badge-danger.pull-right n
+                    | startek website
+      #sidebar.sidebar
+        div(data-scrollbar='true', data-height='100%')
+          ul.nav
+            li.nav-header RedirectServer
+            li(class="#{current === 0 ? 'active' : ''}")
+              a(href='/')
+                i.fa.fa-file-code-o
+                span #{t('serverStatus')}
+            li(class="#{current === 5 ? 'active' : ''}")
+              a(href='/log/restful-api')
+                i.fa.fa-archive
+                span #{t('serverLogCheck')}
+            li(class="#{current === 8 ? 'active' : ''}")
+              a.sidebar-minify-btn(href='javascript:;', data-click='sidebar-minify')
+                i.fa.fa-angle-double-left
+      .sidebar-bg
+      #content.content
+        block content
     script(src='/plugins/jquery/jquery-1.9.1.min.js')
     script(src='/plugins/jquery/jquery-migrate-1.1.0.min.js')
     script(src='/plugins/jquery-ui/ui/minified/jquery-ui.min.js')
