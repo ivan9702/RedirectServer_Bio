@@ -42,5 +42,6 @@
   "result": "Result",
   "submission": "Submission",
   "date": "Date",
-  "scrollDown": "Scroll down to view all info."
+  "scrollDown": "Scroll down to view all info.",
+  "bioserverInfo": "Bioserver info"
 }

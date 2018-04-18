@@ -42,5 +42,6 @@
   "result": "比對結果",
   "submission": "傳入參數",
   "date": "日期",
-  "scrollDown": "往下捲時自動載入"
+  "scrollDown": "往下捲時自動載入",
+  "bioserverInfo": "Bioserver 資訊"
 }
