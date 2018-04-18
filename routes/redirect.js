@@ -129,6 +129,7 @@ redirect.use(serverExists);
 
 redirect.post('/enroll', (req, res) => {
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId && req.body.fpIndex) {
+    req.body.fpIndex = parseInt(req.body.fpIndex, 10);
     // sort bioservers by count
     RedirectData.bioservers.sort((a, b) => {
       return a.count - b.count;
@@ -344,6 +345,7 @@ redirect.post('/verify', (req, res) => {
 
 redirect.post('/delete', (req, res) => {
   if (req.body.clientUserId && req.body.fpIndex) {
+    req.body.fpIndex = parseInt(req.body.fpIndex, 10);
     let errorFlag = 0;
     let backupUserFP;
     UserFP.findOneAndRemove({

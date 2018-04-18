@@ -48,7 +48,7 @@ app.use(mung.json(
       if (req.baseUrl === '/redirect' && (req.path !== '/' && req.path.substring(0,7) !== '/getLog' && req.path.substring(0,7) !== '/getBio')) {
         const reqPath = req.path;
         const clientUserId = (req.body.clientUserId) ? req.body.clientUserId : null;
-        const fpIndex = (req.body.fpIndex) ? req.body.fpIndex : null;
+        const fpIndex = (req.body.fpIndex) ? parseInt(req.body.fpIndex, 10) : null;
         const userId = (req.logInfo && req.logInfo.userId) ? req.logInfo.userId : null;
         const userInfo = {clientUserId, fpIndex, userId};
         const resBody = body;
