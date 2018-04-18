@@ -46,7 +46,7 @@ block content
                   br
                   | Code
                 th(ng-hide="showFunction") Message
-                th(ng-hide="showFunction") Bioserver IP
+                th(ng-hide="showFunction") Bioserver Id
               tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2', ng-init="limit= 20")
                 td {{key+1}}
                 td(ng-bind="item.reqPath")
@@ -55,7 +55,7 @@ block content
                 td(ng-hide="showFunction", ng-bind="item.clientUserId")
                 td(ng-hide="showFunction", ng-bind="item.responseCode")
                 td(ng-hide="showFunction", ng-bind="item.message")
-                td(ng-hide="showFunction", ng-bind="item.bsIP")
+                td(ng-hide="showFunction", ng-bind="item.bsId")
             tbody
 
 block pageJS

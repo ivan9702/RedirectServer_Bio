@@ -49,13 +49,13 @@ app.use(mung.json(
         const reqPath = req.path;
         const clientUserId = (req.body.clientUserId) ? req.body.clientUserId : null;
         const fpIndex = (req.body.fpIndex) ? req.body.fpIndex : null;
-        const userId = (req.logInfo.userId) ? req.logInfo.userId : null;
+        const userId = (req.logInfo && req.logInfo.userId) ? req.logInfo.userId : null;
         const userInfo = {clientUserId, fpIndex, userId};
         const resBody = body;
-        const bsIP = (req.logInfo.bsIP) ? req.logInfo.bsIP : null;
+        const bsId = (req.logInfo && req.logInfo.bsId) ? req.logInfo.bsId : null;
         let eventTime = new Date();
 
-        let newEventLog = new EventLog({reqPath, userInfo, resBody, bsIP, eventTime: eventTime.toUTCString()});
+        let newEventLog = new EventLog({reqPath, userInfo, resBody, bsId, eventTime: eventTime.toUTCString()});
         newEventLog.save().then(() => {
           if (eventTime.yyyymmdd() != BrowserInfo.today){
             updateStatistics();

@@ -31,24 +31,26 @@ redirect.get('/getLog/:page*?', (req, res) => {
     searchFilter["$text"] = {$search: req.query.query};
   //console.log(searchFilter);
   EventLog.find(searchFilter, null, {skip: skipNumber, limit: 30, sort: {eventTime: -1}}).then((eventLogs) => {
-    eventLogs.forEach((eventLog) => {
-      let result = {
-        reqPath: eventLog.reqPath,
-        userId: eventLog.userInfo && eventLog.userInfo.userId ? eventLog.userInfo.userId : 0,
-        fpIndex: eventLog.userInfo && eventLog.userInfo.fpIndex ? eventLog.userInfo.fpIndex : 0,
-        clientUserId: eventLog.userInfo && eventLog.userInfo.clientUserId ? eventLog.userInfo.clientUserId : '',
-        responseCode: eventLog.resBody && eventLog.resBody.code ? eventLog.resBody.code : 0,
-        message: eventLog.resBody && eventLog.resBody.message ? eventLog.resBody.message : '',
-        bsIP: eventLog.bsIP ? eventLog.bsIP : ''
-      };
-      if (eventLog.reqPath === '/identify') {
-        result.clientUserId = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.clientUserId ? eventLog.resBody.data.clientUserId : '';
-        result.fpIndex = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.fpIndex ? eventLog.resBody.data.fpIndex : 0;
-      } else if (eventLog.reqPath === '/verify') {
-        result.fpIndex = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.fpIndex ? eventLog.resBody.data.fpIndex : 0;
-      }
-      resultArray.push(result);
-    });
+    if (0 !== eventLogs.length) {
+      eventLogs.forEach((eventLog) => {
+        let result = {
+          reqPath: eventLog.reqPath,
+          userId: eventLog.userInfo && eventLog.userInfo.userId ? eventLog.userInfo.userId : 0,
+          fpIndex: eventLog.userInfo && eventLog.userInfo.fpIndex ? eventLog.userInfo.fpIndex : 0,
+          clientUserId: eventLog.userInfo && eventLog.userInfo.clientUserId ? eventLog.userInfo.clientUserId : '',
+          responseCode: eventLog.resBody && eventLog.resBody.code ? eventLog.resBody.code : 0,
+          message: eventLog.resBody && eventLog.resBody.message ? eventLog.resBody.message : '',
+          bsId: eventLog.bsId ? eventLog.bsId : ''
+        };
+        if (eventLog.reqPath === '/identify') {
+          result.clientUserId = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.clientUserId ? eventLog.resBody.data.clientUserId : '';
+          result.fpIndex = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.fpIndex ? eventLog.resBody.data.fpIndex : 0;
+        } else if (eventLog.reqPath === '/verify') {
+          result.fpIndex = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.fpIndex ? eventLog.resBody.data.fpIndex : 0;
+        }
+        resultArray.push(result);
+      });
+    }
     res.json(resultArray);
   }).catch((err) => {
     res.json({code: 501, message: 'May be Some Error on Input or Server (/getLog)'});
@@ -126,7 +128,6 @@ redirect.post('/addBioserver', (req, res) => {
 redirect.use(serverExists);
 
 redirect.post('/enroll', (req, res) => {
-  console.log(typeof req.body.fpIndex);
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId && req.body.fpIndex) {
     // sort bioservers by count
     RedirectData.bioservers.sort((a, b) => {
@@ -172,7 +173,7 @@ redirect.post('/enroll', (req, res) => {
       return Promise.all([newUserFP, updatedBsId]);
     }).then((results) => {
       errorFlag = 3;
-      req.logInfo.bsIP = addFPIP;
+      req.logInfo.bsId = bioServerId;
       return axios.post(addFPIP + '/api/addFP', {
         userId: userId,
         fpIndex: req.body.fpIndex,
@@ -264,8 +265,8 @@ redirect.post('/identify', (req, res) => {
           userId: result.userId,
           fpIndex: result.fpIndex
         }).then((userFP) => {
-          let targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === userFP.bioServerId);
-          req.logInfo.bsIP = targetServer.bsIP;
+          // let targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === userFP.bioServerId);
+          req.logInfo.bsId = userFP.bioServerId;
           req.logInfo.userId = userFP.userId;
           res.json({
             code: 20004,
@@ -304,7 +305,7 @@ redirect.post('/verify', (req, res) => {
       errorFlag = 1;
       if (0 !== user.length) {
         const verifyServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === user[0].bioServerId);
-        req.logInfo.bsIP = verifyServer.bsIP;
+        req.logInfo.bsId = verifyServer.bsId;
         userIdForLog = user[0].userId;
         return axios.post(verifyServer.bsIP + '/api/verifyFP', {
           userId: user[0].userId,
@@ -367,7 +368,7 @@ redirect.post('/delete', (req, res) => {
       }
     }).then((bioserver) => {
       errorFlag = 2;
-      req.logInfo.bsIP = bioserver.bsIP;
+      req.logInfo.bsId = bioserver.bsId;
       return axios.post(bioserver.bsIP + '/api/deleteFP', {
         userId: backupUserFP.userId,
         fpIndex: req.body.fpIndex

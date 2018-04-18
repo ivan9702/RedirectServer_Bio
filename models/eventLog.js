@@ -10,8 +10,8 @@ const EventLogSchema = new mongoose.Schema({
   resBody: {
     type: Object
   },
-  bsIP: {
-    type: String
+  bsId: {
+    type: Number
   },
   eventTime: {
     type: Date, 
