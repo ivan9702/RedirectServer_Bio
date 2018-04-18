@@ -142,6 +142,9 @@ function updateStatistics() {
       if (eventlog.eventTime > todayDate) {
         // today's log
         BrowserInfo.todayAPICallAmount++;
+        if (eventlog.resBody.code > 40000) {
+          BrowserInfo.todayErrCallAmount++;
+        }
         switch(eventlog.resBody.code){
           case 20001:
           case 20002:
@@ -150,26 +153,26 @@ function updateStatistics() {
             BrowserInfo.today200Amount++;
             break;
           case 40301:
+          case 40302:
             BrowserInfo.today403Amount++;
-            BrowserInfo.todayErrCallAmount++;
             break;
           case 40401:
           case 40402:
           case 40403:
+          case 40404:
             BrowserInfo.today404Amount++;
-            BrowserInfo.todayErrCallAmount++;
             break;
           case 40601:
           case 40602:
           case 40603:
           case 40604:
+          case 40605:
             BrowserInfo.today406Amount++;
-            BrowserInfo.todayErrCallAmount++;
             break;
           case 50101:
           case 50102:
+          case 50103:
             BrowserInfo.today501Amount++;
-            BrowserInfo.todayErrCallAmount++;
             break;
         }
       } else {
