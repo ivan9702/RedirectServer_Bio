@@ -115,7 +115,7 @@ function resetBrowserInfo() {
   BrowserInfo.sevenDayError = [0,0,0,0,0,0,0];
 }
 
-function updateStatistics() {
+updateStatistics = function() {
   resetBrowserInfo();
   let todayDate = new Date();
   todayDate.setHours(0,0,0,0);
