@@ -43,5 +43,6 @@
   "submission": "傳入參數",
   "date": "日期",
   "scrollDown": "往下捲時自動載入",
-  "bioserverInfo": "Bioserver 資訊"
+  "bioserverInfo": "Bioserver 資訊",
+  "chooseMonth": "選擇月份"
 }
