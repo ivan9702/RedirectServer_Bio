@@ -30,6 +30,14 @@ redirect.get('/getLog/:page*?', (req, res) => {
   if(req.query.query) {
     searchFilter["$text"] = {$search: req.query.query};
   }
+  if(req.query.month) {
+    let thisMonth = req.query.month;
+    let targetYear = parseInt(thisMonth.substring(0, 4));
+    let targetMonth = parseInt(thisMonth.substring(5, 7));
+    let targetDateBegin = new Date(targetYear, targetMonth - 1, 1, 0, 0, 0, 0);
+    let targetDateEnd = new Date(targetYear, targetMonth, 1, 0, 0, 0, 0);
+    searchFilter["eventTime"] = {$gte: targetDateBegin, $lt: targetDateEnd};
+  }
   let js_yyyy_mm_dd_hh_mm_ss = function(now) {
     let year = "" + now.getFullYear();
     let month = "" + (now.getMonth() + 1); if (month.length == 1) { month = "0" + month; }

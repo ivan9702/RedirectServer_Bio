@@ -60,7 +60,8 @@ router.get('/log/restful-api/:code', (req, res) => {
   res.render('logRESTfulAPI', {
     title: 'serverLogCheck',
     current: 4,
-    currentSub: parseInt(req.params.code)
+    currentSub: parseInt(req.params.code),
+    allMonths: BrowserInfo.allMonths
   });
 });
 

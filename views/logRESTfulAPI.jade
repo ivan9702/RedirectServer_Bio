@@ -24,6 +24,15 @@ block content
                   button.btn.btn-sm.btn-inverse(type='submit')
                     i.fa.fa-search
           a.btn.btn-sm.btn-primary.active(href='#', data-toggle='tooltip', title='Reset Filter', ng-click="resetFilter()") Reset
+          ol.breadcrumb.pull-right
+           li.dropdown.navbar-user
+             a.dropdown-toggle(href='javascript:;', data-toggle='dropdown', aria-expanded='false')
+               span.hidden-xs choose month
+               b.caret
+             ul.dropdown-menu.animated.fadeInLeft
+               for month in allMonths
+                 li
+                   a(href='#', data-toggle='tooltip', ng-click="switchFilter({month: '#{month}', query: queryString})") #{month}
         .email-content
           table(class="table table-email", infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1',style="table-layout: fixed; width: 100%")
             thead
@@ -99,6 +108,8 @@ block onPageJS
         console.log(filter);
         if(filter.query)
           this.query = filter.query;
+        if(filter.month)
+          this.month = filter.month;
       };
 
       Github.prototype.nextPage = function() {
@@ -108,6 +119,8 @@ block onPageJS
         url += "?code=" + #{currentSub};
         if(this.query)
           url += "&query="+this.query;
+        if(this.month)
+          url += "&month="+this.month;
         console.log(url);
         $sce.trustAsResourceUrl(url);
         $http.get(url).success(function(data) {
