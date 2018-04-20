@@ -52,8 +52,16 @@ router.get('/', function(req, res, next) {
   });
 });
 
-router.get('/log/restful-api', (req, res) => {
-  res.render('logRESTfulAPI', { title: 'serverLogCheck', current: 5, currentSub: 0});
+// router.get('/log/restful-api', (req, res) => {
+//   res.render('logRESTfulAPI', { title: 'serverLogCheck', current: 5, currentSub: 0});
+// });
+
+router.get('/log/restful-api/:code', (req, res) => {
+  res.render('logRESTfulAPI', {
+    title: 'serverLogCheck',
+    current: 4,
+    currentSub: parseInt(req.params.code)
+  });
 });
 
 router.get('/log/bioServerInfo', (req, res) => {

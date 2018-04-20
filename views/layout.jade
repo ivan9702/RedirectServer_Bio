@@ -43,10 +43,22 @@ html
               a(href='/')
                 i.fa.fa-file-code-o
                 span #{t('serverStatus')}
-            li(class="#{current === 5 ? 'active' : ''}")
-              a(href='/log/restful-api')
-                i.fa.fa-archive
+            li(class="#{current === 4 ? 'has-sub active' : 'has-sub'}")
+              a(href='javascript:;')
+                b.caret.pull-right
+                i.fa.fa-flask
                 span #{t('serverLogCheck')}
+              ul.sub-menu
+                li(class="#{currentSub === 200 ? 'active' : ''}")
+                  a(href='/log/restful-api/200') Sucess (200)
+                li(class="#{currentSub === 403 ? 'active' : ''}")
+                  a(href='/log/restful-api/403') No Matches (403)
+                li(class="#{currentSub === 404 ? 'active' : ''}")
+                  a(href='/log/restful-api/404') No Such a User (404)
+                li(class="#{currentSub === 406 ? 'active' : ''}")
+                  a(href='/log/restful-api/406') Not Acceptable (406)
+                li(class="#{currentSub === 501 ? 'active' : ''}")
+                  a(href='/log/restful-api/501') Input or Sever Error (501)
             li(class="#{current === 6 ? 'active' : ''}")
               a(href='/log/bioServerInfo')
                 i.fa.fa-archive

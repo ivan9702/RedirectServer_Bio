@@ -10,7 +10,7 @@ block content
     li.active
       a(href='javascript:;') #{t('serverLogCheck')}
   h1.page-header
-    | RedirectServer
+    | Redirect Server
     small RESTFul API
   .p-20
     div(class='row', ng-app='listApp', ng-controller='listController')
@@ -23,12 +23,7 @@ block content
                 span.input-group-btn
                   button.btn.btn-sm.btn-inverse(type='submit')
                     i.fa.fa-search
-          a.btn.btn-sm.btn-success.active(href='#', data-toggle='tooltip', title='Success', ng-click="switchFilter({code: 200})") 200
-          a.btn.btn-sm.btn-primary.active(href='#', data-toggle='tooltip', title='No Matches', ng-click="switchFilter({code: 403})") 403
-          a.btn.btn-sm.btn-primary.active(href='#', data-toggle='tooltip', title='No Such a User', ng-click="switchFilter({code: 404})") 404
-          a.btn.btn-sm.btn-inverse.active(href='#', data-toggle='tooltip', title='Required Columns Not Fulfilled / Minutiae Code Length Not Satisfied', ng-click="switchFilter({code: 406})") 406
-          a.btn.btn-sm.btn-danger.active(href='#', data-toggle='tooltip', title='Input or Server Error', ng-click="switchFilter({code: 501})") 501
-          a.btn.btn-sm.btn-standard.active(href='#', data-toggle='tooltip', title='Reset Filter', ng-click="resetFilter()") Reset
+          a.btn.btn-sm.btn-primary.active(href='#', data-toggle='tooltip', title='Reset Filter', ng-click="resetFilter()") Reset
         .email-content
           table(class="table table-email", infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1',style="table-layout: fixed; width: 100%")
             thead
@@ -102,8 +97,6 @@ block onPageJS
         this.busy = false;
         this.after = 1;
         console.log(filter);
-        if(filter.code)
-          this.code = filter.code;
         if(filter.query)
           this.query = filter.query;
       };
@@ -112,10 +105,9 @@ block onPageJS
         if (this.busy) return;
         this.busy = true;
         var url = "/redirect/getLog/" + this.after;
-        if (this.code)
-          url += "?code="+this.code;
+        url += "?code=" + #{currentSub};
         if(this.query)
-          url += "?query="+this.query;
+          url += "&query="+this.query;
         console.log(url);
         $sce.trustAsResourceUrl(url);
         $http.get(url).success(function(data) {
