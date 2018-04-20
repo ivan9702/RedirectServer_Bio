@@ -27,8 +27,18 @@ redirect.get('/getLog/:page*?', (req, res) => {
     searchFilter["resBody.code"] = {$gt: parseInt(req.query.code) * 100, $lt: parseInt(req.query.code) * 100 + 50};
     // searchFilter["resBody.code"] = parseInt(req.query.code);
   }
-  if(req.query.query)
+  if(req.query.query) {
     searchFilter["$text"] = {$search: req.query.query};
+  }
+  let js_yyyy_mm_dd_hh_mm_ss = function(now) {
+    let year = "" + now.getFullYear();
+    let month = "" + (now.getMonth() + 1); if (month.length == 1) { month = "0" + month; }
+    let day = "" + now.getDate(); if (day.length == 1) { day = "0" + day; }
+    let hour = "" + now.getHours(); if (hour.length == 1) { hour = "0" + hour; }
+    let minute = "" + now.getMinutes(); if (minute.length == 1) { minute = "0" + minute; }
+    let second = "" + now.getSeconds(); if (second.length == 1) { second = "0" + second; }
+    return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
+  };
   //console.log(searchFilter);
   EventLog.find(searchFilter, null, {skip: skipNumber, limit: 30, sort: {eventTime: -1}}).then((eventLogs) => {
     if (0 !== eventLogs.length) {
@@ -40,7 +50,8 @@ redirect.get('/getLog/:page*?', (req, res) => {
           clientUserId: eventLog.userInfo && eventLog.userInfo.clientUserId ? eventLog.userInfo.clientUserId : '',
           responseCode: eventLog.resBody && eventLog.resBody.code ? eventLog.resBody.code : 0,
           message: eventLog.resBody && eventLog.resBody.message ? eventLog.resBody.message : '',
-          bsId: eventLog.bsId ? eventLog.bsId : ''
+          bsId: eventLog.bsId ? eventLog.bsId : '',
+          eventTime: eventLog.eventTime ? js_yyyy_mm_dd_hh_mm_ss(eventLog.eventTime) : ''
         };
         if (eventLog.reqPath === '/identify') {
           result.clientUserId = eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.clientUserId ? eventLog.resBody.data.clientUserId : '';

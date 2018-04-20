@@ -38,24 +38,29 @@ block content
                   span(style='font-size:130%;') #{t('receive')}
                   br
                   | Request
-                th(ng-hide="showFunction") userId
-                th(ng-hide="showFunction") fpIndex
                 th(ng-hide="showFunction") clientUserId
+                th(ng-hide="showFunction") fpIndex
                 th(ng-hide="showFunction")
                   span(style='font-size:130%;') #{t('response')}
                   br
                   | Code
                 th(ng-hide="showFunction") Message
-                th(ng-hide="showFunction") Bioserver Id
+                th(ng-show="showFunction") userId
+                th(ng-show="showFunction") Bioserver Id
+                th Date
+                th Switch
               tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2', ng-init="limit= 20")
                 td {{key+1}}
                 td(ng-bind="item.reqPath")
-                td(ng-hide="showFunction", ng-bind="item.userId")
-                td(ng-hide="showFunction", ng-bind="item.fpIndex")
                 td(ng-hide="showFunction", ng-bind="item.clientUserId")
+                td(ng-hide="showFunction", ng-bind="item.fpIndex")
                 td(ng-hide="showFunction", ng-bind="item.responseCode")
                 td(ng-hide="showFunction", ng-bind="item.message")
-                td(ng-hide="showFunction", ng-bind="item.bsId")
+                td(ng-show="showFunction", ng-bind="item.userId")
+                td(ng-show="showFunction", ng-bind="item.bsId")
+                td(ng-bind="item.eventTime")
+                td
+                  span.email-header-link(ng-click="switchStatus()") Switch
             tbody
 
 block pageJS
