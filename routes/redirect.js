@@ -23,21 +23,7 @@ redirect.get('/getLog/:page*?', (req, res) => {
   let skipNumber = 30 * (pageNumber - 1);
   let resultArray = [];
   let searchFilter = {};
-  if (req.query.code) {
-    searchFilter["resBody.code"] = {$gt: parseInt(req.query.code) * 100, $lt: parseInt(req.query.code) * 100 + 50};
-    // searchFilter["resBody.code"] = parseInt(req.query.code);
-  }
-  if(req.query.query) {
-    searchFilter["$text"] = {$search: req.query.query};
-  }
-  if(req.query.month) {
-    let thisMonth = req.query.month;
-    let targetYear = parseInt(thisMonth.substring(0, 4));
-    let targetMonth = parseInt(thisMonth.substring(5, 7));
-    let targetDateBegin = new Date(targetYear, targetMonth - 1, 1, 0, 0, 0, 0);
-    let targetDateEnd = new Date(targetYear, targetMonth, 1, 0, 0, 0, 0);
-    searchFilter["eventTime"] = {$gte: targetDateBegin, $lt: targetDateEnd};
-  }
+  let dateFilter = {};
   let js_yyyy_mm_dd_hh_mm_ss = function(now) {
     let year = "" + now.getFullYear();
     let month = "" + (now.getMonth() + 1); if (month.length == 1) { month = "0" + month; }
@@ -47,7 +33,46 @@ redirect.get('/getLog/:page*?', (req, res) => {
     let second = "" + now.getSeconds(); if (second.length == 1) { second = "0" + second; }
     return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
   };
-  //console.log(searchFilter);
+
+  let getDateFromString = function (stringDate, option) {
+    let result = stringDate.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (!result) {
+      return null;
+    }
+    let targetYear = parseInt(result[0].substring(0, 4));
+    let targetMonth = parseInt(result[0].substring(5, 7));
+    let targetDay = parseInt(result[0].substring(8, 10));
+    let targetHour = 0;
+    let targetMinute = 0;
+    if (option === 'end') {
+      targetHour = 23;
+      targetMinute = 59;
+    }
+    return new Date(targetYear, targetMonth - 1, targetDay, targetHour, targetMinute, 0, 0);
+  };
+
+  if (req.query.code) {
+    searchFilter["resBody.code"] = {$gt: parseInt(req.query.code) * 100, $lt: parseInt(req.query.code) * 100 + 50};
+    // searchFilter["resBody.code"] = parseInt(req.query.code);
+  }
+  if(req.query.query) {
+    searchFilter["$text"] = {$search: req.query.query};
+  }
+  if (req.query.startDate) {
+    let targetDateBegin = getDateFromString(req.query.startDate, 'start');
+    if (targetDateBegin) {
+      dateFilter["$gte"] = targetDateBegin;
+    }
+  }
+  if (req.query.endDate) {
+    let targetDateEnd = getDateFromString(req.query.endDate, 'end');
+    if (targetDateEnd) {
+      dateFilter["$lte"] = targetDateEnd;
+    }
+  }
+  if (dateFilter["$gte"] || dateFilter["$lte"]) {
+    searchFilter["eventTime"] = dateFilter;
+  }
   EventLog.find(searchFilter, null, {skip: skipNumber, limit: 30, sort: {eventTime: -1}}).then((eventLogs) => {
     if (0 !== eventLogs.length) {
       eventLogs.forEach((eventLog) => {

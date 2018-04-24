@@ -16,23 +16,22 @@ block content
     div(class='row', ng-app='listApp', ng-controller='listController')
       .col-md-12
         .email-btn-row.hidden-xs
-          .col-md-4
-            form(ng-submit="submitForm()")
-              .input-group.m-b-15
-                input.form-control.input-sm.input-white(type='text', placeholder='',id="queryString", ng-model="queryString")
-                span.input-group-btn
-                  button.btn.btn-sm.btn-inverse(type='submit')
-                    i.fa.fa-search
-          a.btn.btn-sm.btn-primary.active(href='#', data-toggle='tooltip', title='Reset Filter', ng-click="resetFilter()") Reset
-          ol.breadcrumb.pull-right
-           li.dropdown.navbar-user
-             a.dropdown-toggle(href='javascript:;', data-toggle='dropdown', aria-expanded='false')
-               span.hidden-xs #{t('chooseMonth')}
-               b.caret
-             ul.dropdown-menu.animated.fadeInLeft
-               for month in allMonths
-                 li
-                   a(href='#', data-toggle='tooltip', ng-click="switchFilter({month: '#{month}', query: queryString})") #{month}
+          .row
+            .col-xs-3
+              .input-group
+                span.input-group-addon Query String
+                input.form-control(type='text', placeholder='e.g. identify', id="queryString", ng-model="queryString")
+            .col-xs-3
+              .input-group
+                span.input-group-addon Start Date
+                input.form-control(type='text', placeholder='e.g. yyyy-mm-dd', id="startDate", ng-model="startDate")
+            .col-xs-3
+              .input-group
+                span.input-group-addon End Date
+                input.form-control(type='text', placeholder='e.g. yyyy-mm-dd', id="endDate", ng-model="endDate")
+            .col-xs-3
+              button.btn.btn-sm.btn-success.active(href='#', data-toggle='tooltip', ng-click="switchFilter({query: queryString, startDate: startDate, endDate: endDate})") Search
+              button.btn.btn-sm.btn-primary.active(href='#', data-toggle='tooltip', ng-click="resetFilter()") Reset
         .email-content
           table(class="table table-email", infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1',style="table-layout: fixed; width: 100%")
             thead
@@ -98,6 +97,8 @@ block onPageJS
         $scope.github = new Github({});
         $scope.github.nextPage();
         $scope.queryString = '';
+        $scope.startDate = '';
+        $scope.endDate = '';
       }
     });
     listApp.factory('Github', function($http, $sce) {
@@ -108,8 +109,10 @@ block onPageJS
         console.log(filter);
         if(filter.query)
           this.query = filter.query;
-        if(filter.month)
-          this.month = filter.month;
+        if(filter.startDate)
+          this.startDate = filter.startDate;
+        if(filter.endDate)
+          this.endDate = filter.endDate;
       };
 
       Github.prototype.nextPage = function() {
@@ -119,8 +122,10 @@ block onPageJS
         url += "?code=" + #{currentSub};
         if(this.query)
           url += "&query="+this.query;
-        if(this.month)
-          url += "&month="+this.month;
+        if(this.startDate)
+          url += "&startDate="+this.startDate;
+        if(this.endDate)
+          url += "&endDate="+this.endDate;
         console.log(url);
         $sce.trustAsResourceUrl(url);
         $http.get(url).success(function(data) {
