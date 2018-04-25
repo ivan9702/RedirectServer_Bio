@@ -27,12 +27,14 @@ block content
                 th IP
                 th Id  
                 th FP count
+                th version
               tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2', ng-init="limit= 20")
                 td {{key+1}}
                 td
                   a(ng-href="{{item.bsIP}}", ng-bind="item.bsIP", target='_blank')              
                 td(ng-bind="item.bsId")
                 td(ng-bind="item.count")
+                td(ng-bind="item.version")
             tbody
 
 block pageJS

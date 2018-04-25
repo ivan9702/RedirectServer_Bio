@@ -107,7 +107,8 @@ redirect.get('/getBio', (req, res) => {
     resultArray.push({
       bsIP: bioserver.bsIP,
       bsId: bioserver.bsId,
-      count: bioserver.count
+      count: bioserver.count,
+      version: bioserver.version
     });
   });
 
