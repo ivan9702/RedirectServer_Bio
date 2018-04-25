@@ -343,7 +343,8 @@ function onListening() {
         RedirectData.bioservers.push({
           bsIP: values[2][i].bsIP,
           bsId: values[2][i].bsId,
-          count: values[2][i].count
+          count: values[2][i].count,
+          version: values[2][i].version
         });
       }
       console.log('RedirectData.bioservers: ' + JSON.stringify(RedirectData.bioservers, null, 2));

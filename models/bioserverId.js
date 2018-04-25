@@ -14,6 +14,9 @@ var BioserverIdSchema = new mongoose.Schema({
   count: {
     type: Number
   },
+  version: {
+    type: String
+  },
   updated_at: {
     type: Date, 
     default: Date.toUTCString
