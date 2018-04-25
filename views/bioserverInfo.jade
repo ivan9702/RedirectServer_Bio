@@ -15,6 +15,10 @@ block content
   .p-20
     div(class='row', ng-app='listApp', ng-controller='listController')
       .col-md-12
+        .email-btn-row.hidden-xs
+          .row
+            .col-xs-12
+              p(style='font-size:160%; color:black') Redirect server vision: #{rsVersion}
         .email-content
           table(class="table table-email", infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1',style="table-layout: fixed; width: 100%")
             thead

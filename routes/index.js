@@ -66,7 +66,12 @@ router.get('/log/restful-api/:code', (req, res) => {
 });
 
 router.get('/log/bioServerInfo', (req, res) => {
-  res.render('bioserverInfo', { title: 'bioserverInfo', current: 6, currentSub: 0});
+  res.render('bioserverInfo', {
+    title: 'bioserverInfo',
+    current: 6,
+    currentSub: 0,
+    rsVersion: BrowserInfo.version
+  });
 });
 
 module.exports = router;
