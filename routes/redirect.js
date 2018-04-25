@@ -117,51 +117,46 @@ redirect.get('/getBio', (req, res) => {
 redirect.post('/addBioserver', (req, res) => {
   req.logInfo = {};
   if (req.body.bsIP) {
-    let newBioserver = new BioserverId({
-      bsIP: req.body.bsIP,
-      bsId: RedirectData.lastBSId,
-      count: 0,
-      updated_at: new Date().toUTCString()
-    });
-
     let errorFlag = 0;
-    newBioserver.save().then(() => {
+    let bioserverURL = req.body.bsIP + '/api/getServerInfo';
+    axios.get(bioserverURL, {httpsAgent: agent}).then((response) => {
       errorFlag = 1;
-      let bioserverURL = req.body.bsIP + '/api/getServerInfo';
-      return axios.get(bioserverURL, {httpsAgent: agent});
-    }).then((response) => {
       if (200 === response.data.code) {
         if (0 === response.data.count) {
-          RedirectData.bioservers.push({
+          errorFlag = 2;
+          let newBioserver = new BioserverId({
             bsIP: req.body.bsIP,
             bsId: RedirectData.lastBSId,
-            count: 0
+            count: 0,
+            version: response.data.version,
+            updated_at: new Date().toUTCString()
           });
-          console.log('RedirectData.bioservers: ' + JSON.stringify(RedirectData.bioservers, null, 2));
-          RedirectData.lastBSId++;
-          res.json({code: 200, message: 'New bioserver has been saved.'});
+          return newBioserver.save();
         } else {
           throw new Error('Not clean');
         }
       } else {
         throw new Error('bioserver error');
       }
+    }).then((newBS) => {
+      RedirectData.bioservers.push({
+        bsIP: req.body.bsIP,
+        bsId: RedirectData.lastBSId,
+        count: 0,
+        version: newBS.version
+      });
+      console.log('RedirectData.bioservers: ' + JSON.stringify(RedirectData.bioservers, null, 2));
+      RedirectData.lastBSId++;
+      res.json({code: 200, message: 'New bioserver has been saved.'});
     }).catch((err) => {
       if (11000 === err.code) {
         res.json({code: 406, message: 'This bioserver has already existed.'});
-      } else if ('Not clean' === err.message || 'bioserver error' === err.message || 1 === errorFlag) {
-        BioserverId.findOneAndRemove({
-          bsIP: req.body.bsIP,
-          bsId: RedirectData.lastBSId
-        }).then(() => {
-          throw new Error('Could not connect the new Bioserver or Bioserver not clean.');
-        }).catch((err) => {
-          if ('Could not connect the new Bioserver or Bioserver not clean.' === err.message) {
-            res.json({code: 404, message: err.message});
-          } else {
-            res.json({code: 501, message: 'May be Some Error on Input or Server.'});
-          }
-        });
+      } else if ('Not clean' === err.message || 'bioserver error' === err.message || 0 === errorFlag) {
+        res.json({code: 404, message: 'Could not connect the new Bioserver or Bioserver not clean.'});
+      } else if (2 === errorFlag) {
+        res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
+      } else {
+        res.json({code: 501, message: 'May be Some Error on Input or Server.'});
       }
     });
   } else {
