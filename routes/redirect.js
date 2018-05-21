@@ -7,6 +7,29 @@ const {UserFP} = require('./../models/userFP');
 const serverExists = require('./middleware/serverExists');
 const {EventLog} = require('./../models/eventLog');
 
+const js_yyyy_mm_dd_hh_mm_ss = function(now) {
+  let year = "" + now.getFullYear();
+  let month = "" + (now.getMonth() + 1); if (month.length == 1) { month = "0" + month; }
+  let day = "" + now.getDate(); if (day.length == 1) { day = "0" + day; }
+  let hour = "" + now.getHours(); if (hour.length == 1) { hour = "0" + hour; }
+  let minute = "" + now.getMinutes(); if (minute.length == 1) { minute = "0" + minute; }
+  let second = "" + now.getSeconds(); if (second.length == 1) { second = "0" + second; }
+  return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
+};
+
+const getDateFromString = function (stringDate) {
+  const result = stringDate.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})$/);
+  if (!result) {
+    return null;
+  }
+  const targetYear = parseInt(result[1]);
+  const targetMonth = parseInt(result[2]);
+  const targetDay = parseInt(result[3]);
+  const targetHour = parseInt(result[4]);
+  const targetMinute = parseInt(result[5]);
+  return new Date(targetYear, targetMonth - 1, targetDay, targetHour, targetMinute, 0, 0);
+};
+
 var redirect = express.Router();
 const agent = new https.Agent({rejectUnauthorized: false});
 
@@ -24,32 +47,6 @@ redirect.get('/getLog/:page*?', (req, res) => {
   let resultArray = [];
   let searchFilter = {};
   let dateFilter = {};
-  let js_yyyy_mm_dd_hh_mm_ss = function(now) {
-    let year = "" + now.getFullYear();
-    let month = "" + (now.getMonth() + 1); if (month.length == 1) { month = "0" + month; }
-    let day = "" + now.getDate(); if (day.length == 1) { day = "0" + day; }
-    let hour = "" + now.getHours(); if (hour.length == 1) { hour = "0" + hour; }
-    let minute = "" + now.getMinutes(); if (minute.length == 1) { minute = "0" + minute; }
-    let second = "" + now.getSeconds(); if (second.length == 1) { second = "0" + second; }
-    return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
-  };
-
-  let getDateFromString = function (stringDate, option) {
-    let result = stringDate.match(/^\d{4}-\d{2}-\d{2}$/);
-    if (!result) {
-      return null;
-    }
-    let targetYear = parseInt(result[0].substring(0, 4));
-    let targetMonth = parseInt(result[0].substring(5, 7));
-    let targetDay = parseInt(result[0].substring(8, 10));
-    let targetHour = 0;
-    let targetMinute = 0;
-    if (option === 'end') {
-      targetHour = 23;
-      targetMinute = 59;
-    }
-    return new Date(targetYear, targetMonth - 1, targetDay, targetHour, targetMinute, 0, 0);
-  };
 
   if (req.query.code) {
     searchFilter["resBody.code"] = {$gt: parseInt(req.query.code) * 100, $lt: parseInt(req.query.code) * 100 + 50};
@@ -59,13 +56,13 @@ redirect.get('/getLog/:page*?', (req, res) => {
     searchFilter["$text"] = {$search: req.query.query};
   }
   if (req.query.startDate) {
-    let targetDateBegin = getDateFromString(req.query.startDate, 'start');
+    let targetDateBegin = getDateFromString(req.query.startDate);
     if (targetDateBegin) {
       dateFilter["$gte"] = targetDateBegin;
     }
   }
   if (req.query.endDate) {
-    let targetDateEnd = getDateFromString(req.query.endDate, 'end');
+    let targetDateEnd = getDateFromString(req.query.endDate);
     if (targetDateEnd) {
       dateFilter["$lte"] = targetDateEnd;
     }
