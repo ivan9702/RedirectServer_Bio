@@ -119,7 +119,7 @@ redirect.post('/addBioserver', (req, res) => {
     let bioserverURL = req.body.bsIP + '/api/getServerInfo';
     axios.get(bioserverURL, {httpsAgent: agent}).then((response) => {
       errorFlag = 1;
-      if (200 === response.data.code) {
+      if (20005 === response.data.code) {
         if (0 === response.data.count) {
           errorFlag = 2;
           let newBioserver = new BioserverId({
@@ -145,20 +145,27 @@ redirect.post('/addBioserver', (req, res) => {
       });
       console.log('RedirectData.bioservers: ' + JSON.stringify(RedirectData.bioservers, null, 2));
       RedirectData.lastBSId++;
-      res.json({code: 200, message: 'New bioserver has been saved.'});
+      res.json({
+        code: 20005,
+        message: 'New bioserver has been saved.',
+        data: {
+          bsId: RedirectData.lastBSId - 1,
+          version: newBS.version
+        }
+      });
     }).catch((err) => {
       if (11000 === err.code) {
-        res.json({code: 406, message: 'This bioserver has already existed.'});
+        res.json({code: 40606, message: 'This bioserver has already existed.'});
       } else if ('Not clean' === err.message || 'bioserver error' === err.message || 0 === errorFlag) {
-        res.json({code: 404, message: 'Could not connect the new Bioserver or Bioserver not clean.'});
+        res.json({code: 40405, message: 'Could not connect to the new Bioserver or Bioserver not clean.'});
       } else if (2 === errorFlag) {
         res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
       } else {
-        res.json({code: 501, message: 'May be Some Error on Input or Server.'});
+        res.json({code: 50101, message: 'May be Some Error on Input or Server.'});
       }
     });
   } else {
-    res.json({code: 406, message: 'Required Columns Not Fullfilled.'});
+    res.json({code: 40603, message: 'Required Columns Not Fullfilled.'});
   }
 });
 
