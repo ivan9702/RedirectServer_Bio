@@ -2,6 +2,7 @@ extends layout
 
 block pageCSS
   link(href='/plugins/bootstrap-wizard/css/bwizard.min.css', rel='stylesheet')
+  link(href='/css/footer.css', rel='stylesheet')
 
 block content
   ol.breadcrumb.pull-right
@@ -15,33 +16,46 @@ block content
   .p-20
     div(class='row', ng-app='listApp', ng-controller='listController')
       .col-md-12
-        .email-btn-row.hidden-xs
+        .email-btn-row
           .row
-            .col-xs-12
-              p(style='font-size:160%; color:black') Redirect server vision: #{rsVersion}
+            .col-xs-8.col-sm-8.col-md-6.col-xs-offset-1.col-sm-offset-1.col-md-offset-2
+              .input-group
+                span.input-group-addon New Bioserver
+                input.form-control(type='text', placeholder='e.g. https://123.123.1.22:8443', id="address")
+            .col-xs-2.col-sm-2.col-md-1
+              button.btn.btn-block.btn-primary.active(id="add") Add
+          br
+          .row
+            .col-xs-8.col-sm-8.col-md-6.col-xs-offset-1.col-sm-offset-1.col-md-offset-2
+              p(id="result")
         .email-content
           table(class="table table-email", infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1',style="table-layout: fixed; width: 100%")
             thead
               tr
                 th #
-                th IP
+                th(style="width: 40%") IP
                 th Id  
                 th FP count
                 th version
+            tbody(id="tableBody")
               tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2', ng-init="limit= 20")
                 td {{key+1}}
-                td
+                td(style="width: 40%")
                   a(ng-href="{{item.bsIP}}", ng-bind="item.bsIP", target='_blank')              
                 td(ng-bind="item.bsId")
                 td(ng-bind="item.count")
                 td(ng-bind="item.version")
-            tbody
+  footer
+    .row
+      .col-xs-7.col-sm-5.col-md-3.col-centered
+        | © STARTEK Redirect Server #{rsVersion}
 
 block pageJS
   script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js')
   script(src='/js/ng-infinite-scroll.min.js')
   script(src='/js/inbox.demo.min.js')
   script(src='/js/apps.min.js')
+  script(src='/js/addBioserver.js')
 
 block onPageJS
   script.
