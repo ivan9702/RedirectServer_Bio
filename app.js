@@ -75,6 +75,8 @@ app.use(mung.json(
               case 20002:
               case 20003:
               case 20004:
+              case 20005:
+              case 20006:
                 BrowserInfo.today200Amount++;
                 break;
               case 40301:
