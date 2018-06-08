@@ -44,35 +44,35 @@ block content
           table(class="table table-email", infinite-scroll='github.nextPage()', infinite-scroll-disabled='github.busy', infinite-scroll-distance='1',style="table-layout: fixed; width: 100%")
             thead
               tr
-                th #
-                th
+                th(style='width: 10%') #
+                th(style='width: 10%')
                   span(style='font-size:130%;') #{t('receive')}
                   br
                   | Request
-                th(ng-hide="showFunction") clientUserId
-                th(ng-hide="showFunction") fpIndex
-                th(ng-hide="showFunction")
+                th(style='width: 15%', ng-hide="showFunction") clientUserId
+                th(style='width: 5%', ng-hide="showFunction") fpIndex
+                th(style='width: 10%', ng-hide="showFunction")
                   span(style='font-size:130%;') #{t('response')}
                   br
                   | Code
-                th(ng-hide="showFunction") Message
-                th(ng-show="showFunction") userId
-                th(ng-show="showFunction") Bioserver Id
-                th Date
-                th Switch
-              tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2', ng-init="limit= 20")
-                td {{key+1}}
-                td(ng-bind="item.reqPath")
-                td(ng-hide="showFunction", ng-bind="item.clientUserId")
-                td(ng-hide="showFunction", ng-bind="item.fpIndex")
-                td(ng-hide="showFunction", ng-bind="item.responseCode")
-                td(ng-hide="showFunction", ng-bind="item.message")
-                td(ng-show="showFunction", ng-bind="item.userId")
-                td(ng-show="showFunction", ng-bind="item.bsId")
-                td(ng-bind="item.eventTime")
-                td
-                  span.email-header-link(ng-click="switchStatus()") Switch
+                th(style='width: 20%', ng-hide="showFunction") Message
+                th(style='width: 25%', ng-show="showFunction") userId
+                th(style='width: 25%', ng-show="showFunction") Bioserver Id
+                th(style='width: 20%') Date
+                th(style='width: 10%') Switch
             tbody
+              tr(ng-repeat='(key, item) in github.items', infinite-scroll-distance='2', ng-init="limit= 20")
+                td(style='width: 10%') {{key+1}}
+                td(style='width: 10%', ng-bind="item.reqPath")
+                td(style='width: 15%', ng-hide="showFunction", ng-bind="item.clientUserId")
+                td(style='width: 5%', ng-hide="showFunction", ng-bind="item.fpIndex")
+                td(style='width: 10%', ng-hide="showFunction", ng-bind="item.responseCode")
+                td(style='width: 20%', ng-hide="showFunction", ng-bind="item.message")
+                td(style='width: 25%', ng-show="showFunction", ng-bind="item.userId")
+                td(style='width: 25%', ng-show="showFunction", ng-bind="item.bsId")
+                td(style='width: 20%', ng-bind="item.eventTime")
+                td(style='width: 10%')
+                  span.email-header-link(ng-click="switchStatus()") Switch
 
 block pageJS
   script(src='//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js')
