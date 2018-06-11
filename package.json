@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "mocha tests/*.test.js"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -22,6 +23,15 @@
   },
   "bin": "./bin/www",
   "pkg": {
-    "assets": ["./views/*", "./public/*", "./locales/*"]
+    "assets": [
+      "./views/*",
+      "./public/*",
+      "./locales/*"
+    ]
+  },
+  "devDependencies": {
+    "expect": "^21.1.0",
+    "mocha": "^3.0.2",
+    "supertest": "^2.0.0"
   }
 }
