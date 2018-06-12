@@ -392,13 +392,17 @@ redirect.post('/delete', async (req, res) => {
     let errorFlag = 0;
     req.body.fpIndex = parseInt(req.body.fpIndex, 10);
     const conditions = {clientUserId: req.body.clientUserId};
-    if (0 !== req.body.fpIndex) {
-      conditions['fpIndex'] = req.body.fpIndex;
-    }
     try {
       const userFPs = await UserFP.find(conditions);
       errorFlag = 1;
       if (userFPs.length > 0) {
+        if (0 !== req.body.fpIndex) {
+          const targetFpIndexExist = userFPs.some((userFP) => userFP.fpIndex === req.body.fpIndex);
+          if (!targetFpIndexExist) {
+            throw new Error('FP not exist');
+          }
+          conditions['fpIndex'] = req.body.fpIndex;
+        }
         // Find the target Bioserver's IP
         const targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === userFPs[0].bioServerId);
         req.logInfo.bsId = userFPs[0].bioServerId;
@@ -409,6 +413,7 @@ redirect.post('/delete', async (req, res) => {
         );
         errorFlag = 2;
         req.logInfo.userId = userFPs[0].userId;
+        const resObj = {};
         if (20002 === response.data.code || 20006 === response.data.code || 40401 === response.data.code || 40402 === response.data.code) {
           const removeResult = await UserFP.remove(conditions);
           errorFlag = 3;
@@ -419,13 +424,21 @@ redirect.post('/delete', async (req, res) => {
           );
           errorFlag = 4;
           targetServer.count -= removeResult.result.n;
+          resObj.data = {leftFPNum: 0};
+          if (0 !== req.body.fpIndex) {
+            resObj.data.leftFPNum = userFPs.length - 1;
+          }
         }
-        res.json({code: response.data.code, message: response.data.message});
+        resObj.code = response.data.code;
+        resObj.message = response.data.message;
+        res.json(resObj);
       } else {
-        res.json({code: 40404, message: 'The Specified User Id and FP Index Number Does Not Exist.'});
+        throw new Error('FP not exist');
       }
     } catch (e) {
-      if (1 === errorFlag) {
+      if ('FP not exist' === e.message) {
+        res.json({code: 40404, message: 'The Specified User Id and FP Index Number Does Not Exist.'});
+      } else if (1 === errorFlag) {
         res.json({code: 50103, message: 'An Error happens when Linking Bioserver.'});
       } else {
         res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
