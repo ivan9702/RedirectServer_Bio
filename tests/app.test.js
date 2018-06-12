@@ -434,6 +434,39 @@ describe('POST /redirect/identify', () => {
 });
 
 describe('POST /redirect/delete', () => {
+  it('just adds one more user_1\'s FP to Bioserver_1 for further tests.', (done) => {
+    request(app)
+      .post('/redirect/enroll')
+      .send({
+        clientUserId: clientUserId_1,
+	      fpIndex: fpIndex_3,
+	      encMinutiae: encMinutiae_3,
+	      eSkey: eSkey,
+	      iv: iv
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toMatchObject({
+          code: 20001,
+          message: 'User\'s Finger Data Has Been Saved.'
+        });
+      })
+      .end((err) => {
+        if (err) {
+          return done(err);
+        }
+        UserFP.find({clientUserId: clientUserId_1}).count().then((count) => {
+          expect(count).toBe(2);
+          return BioserverId.find({bsIP: bioserverIP_1});
+        }).then((bioserver) => {
+          expect(bioserver[0].count).toBe(2);
+          const bioserver_1 = RedirectData.bioservers.find((bioserver) => bioserver.bsId === 1);
+          expect(bioserver_1.count).toBe(2);
+          done();
+        }).catch((err) => done(err));
+      });
+  });
+
   it('just adds one more user_2\'s FP to Bioserver_2 for further tests.', (done) => {
     request(app)
       .post('/redirect/enroll')
@@ -485,7 +518,38 @@ describe('POST /redirect/delete', () => {
         if (err) {
           return done(err);
         }
-        UserFP.find({clientUserId: clientUserId_1, fpIndex: fpIndex_1}).then((userFP) => {
+        UserFP.find({clientUserId: clientUserId_1}).then((userFPs) => {
+          expect(userFPs.length).toBe(1);
+          expect(userFPs[0].fpIndex).toBe(fpIndex_3);
+          return BioserverId.find({bsIP: bioserverIP_1});
+        }).then((bioserver) => {
+          expect(bioserver[0].count).toBe(1);
+          const bioserver_1 = RedirectData.bioservers.find((bioserver) => bioserver.bsId === 1);
+          expect(bioserver_1.count).toBe(1);
+          done();
+        }).catch((err) => done(err));
+      });
+  });
+
+  it('shoud delete a user\'s another FP successfully.', (done) => {
+    request(app)
+      .post('/redirect/delete')
+      .send({
+        clientUserId: clientUserId_1,
+	      fpIndex: fpIndex_3
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toMatchObject({
+          code: 20002,
+          message: 'User\'s Finger Data With the Specified Index Has Been Deleted.',
+        });
+      })
+      .end((err) => {
+        if (err) {
+          return done(err);
+        }
+        UserFP.find({clientUserId: clientUserId_1}).then((userFP) => {
           expect(userFP.length).toBe(0);
           return BioserverId.find({bsIP: bioserverIP_1});
         }).then((bioserver) => {
