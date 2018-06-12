@@ -513,6 +513,7 @@ describe('POST /redirect/delete', () => {
           code: 20002,
           message: 'User\'s Finger Data With the Specified Index Has Been Deleted.',
         });
+        expect(res.body.data.leftFPNum).toBe(1);
       })
       .end((err) => {
         if (err) {
@@ -544,6 +545,7 @@ describe('POST /redirect/delete', () => {
           code: 20002,
           message: 'User\'s Finger Data With the Specified Index Has Been Deleted.',
         });
+        expect(res.body.data.leftFPNum).toBe(0);
       })
       .end((err) => {
         if (err) {
@@ -574,6 +576,7 @@ describe('POST /redirect/delete', () => {
           code: 40404,
           message: 'The Specified User Id and FP Index Number Does Not Exist.'
         });
+        expect(res.body.data).toBeFalsy();
       })
       .end((err) => {
         if (err) {
@@ -604,6 +607,7 @@ describe('POST /redirect/delete', () => {
           code: 20006,
           message: 'User\'s Finger Data Has Been All Deleted.',
         });
+        expect(res.body.data.leftFPNum).toBe(0);
       })
       .end((err) => {
         if (err) {
