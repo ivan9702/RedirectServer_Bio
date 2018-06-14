@@ -89,7 +89,7 @@ BrowserInfo = {
   sevenDayVerify: [0,0,0,0,0,0,0],
   sevenDayIdentify: [0,0,0,0,0,0,0],
   sevenDayError: [0,0,0,0,0,0,0],
-  version: 'v1.0.1'
+  version: 'v1.1.0'
 };
 
 function resetBrowserInfo() {
