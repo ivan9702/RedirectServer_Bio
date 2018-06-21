@@ -1,5 +1,6 @@
 {
   "PORT": 3100,
   "HTTPSPORT": 8443,
-  "MONGODB_URI": "mongodb://localhost/RS_test"
+  "MONGODB_URI": "mongodb://localhost/RS_test",
+  "defaultBioserverIP": "https://123.123.1.44:8449"
 }

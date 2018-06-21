@@ -8,11 +8,13 @@ var app = require('../app');
 var debug = require('debug')('redirectserver:server');
 var http = require('http');
 const https = require('https');
+const axios = require('axios');
 
 const {BioserverId} = require('./../models/bioserverId');
 const {UserFP} = require('./../models/userFP');
 const {sslOptions} = require('./../sslLicense');
 const {EventLog} = require('./../models/eventLog');
+const {config} = require('./../readConfig');
 
 /**
  * Global variables.
@@ -312,6 +314,69 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 
+async function setupBioserver() {
+  let errorFlag = 0;
+  try {
+    const bioservers = await BioserverId.find({});
+    errorFlag = 1;
+    if (0 === bioservers.length) {
+      errorFlag = 2;
+      const agent = new https.Agent({rejectUnauthorized: false});
+      const getServerInfoURL = config.defaultBioserverIP + '/api/getServerInfo';
+      const response = await axios.get(getServerInfoURL, {httpsAgent: agent});
+      errorFlag = 3;
+      if (20005 === response.data.code) {
+        const newBioserver = new BioserverId({
+          bsIP: config.defaultBioserverIP,
+          bsId: 1,
+          count: 0,
+          version: response.data.version,
+          updated_at: new Date().toUTCString()
+        });
+        await newBioserver.save();
+        RedirectData.bioservers.push({
+          bsIP: config.defaultBioserverIP,
+          bsId: 1,
+          count: 0,
+          version: response.data.version
+        });
+        RedirectData.lastBSId++;
+      } else {
+        throw new Error('res code error');
+      }
+    } else {
+      bioservers.sort((a, b) => {
+        return b.bsId - a.bsId;
+      });
+      RedirectData.lastBSId = bioservers[0].bsId + 1;
+      console.log('lastBSId: ' + RedirectData.lastBSId);
+      bioservers.forEach((bioserver) => {
+        RedirectData.bioservers.push({
+          bsIP: bioserver.bsIP,
+          bsId: bioserver.bsId,
+          count: bioserver.count,
+          version: bioserver.version
+        });
+      });
+      console.log('RedirectData.bioservers: ' + JSON.stringify(RedirectData.bioservers, null, 2));
+      const lastUser = await UserFP.find({}, null, {sort: {userId: -1}, limit: 1});
+      if (1 === lastUser.length) {
+        RedirectData.lastUserId = lastUser[0].userId + 1;
+        console.log('lastUserId: ' + RedirectData.lastUserId);
+      }
+    }
+  } catch (e) {
+    if ('res code error' === e.message) {
+      console.log('response code error');
+    } else if (2 === errorFlag) {
+      console.log('Could not connect to the new Bioserver.');
+      console.log(e.message);
+    } else {
+      console.log('May be Some Error on MongoDB.');
+    }
+  }
+}
+
 function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string'
@@ -319,39 +384,6 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 
-  let findLastBSId = BioserverId.find({}, null, {sort: {bsId: -1}, limit: 1});
-  let findLastUserId = UserFP.find({}, null, {sort: {userId: -1}, limit: 1});
-  let serverForEnroll = BioserverId.find({}, null, {sort: {count: 1}});
-
-  Promise.all([findLastBSId, findLastUserId, serverForEnroll]).then((values) => {
-    if (1 === values[0].length) {
-      let lastBioserver = values[0][0];
-      // update the lastBSId
-      RedirectData.lastBSId = lastBioserver.bsId + 1;
-      console.log('lastBSId: ' + RedirectData.lastBSId);
-    }
-
-    if (1 === values[1].length) {
-      let lastUser = values[1][0];
-      // update the lastUserId
-      RedirectData.lastUserId = lastUser.userId + 1;
-      console.log('lastUserId: ' + RedirectData.lastUserId);
-    }
-
-    if (0 !== values[2].length) {
-      for (let i = 0; i < values[2].length; i++) {
-        RedirectData.bioservers.push({
-          bsIP: values[2][i].bsIP,
-          bsId: values[2][i].bsId,
-          count: values[2][i].count,
-          version: values[2][i].version
-        });
-      }
-      console.log('RedirectData.bioservers: ' + JSON.stringify(RedirectData.bioservers, null, 2));
-    }
-  }).catch((reason) => {
-    console.log('Read DB error: ' + reason);
-  });
-
+  setupBioserver();
   updateStatistics();
 }
