@@ -6,7 +6,7 @@ const app = require('./../app');
 const {BioserverId} = require('./../models/bioserverId');
 const {UserFP} = require('./../models/userFP');
 
-const bioserverIP_1 = 'https://192.168.1.44:8449'; // clean
+const bioserverIP_1 = 'https://192.168.1.44:8449'; // default Bioserver
 const bioserverIP_2 = 'https://192.168.1.44:8450'; // clean
 const bioserverIP_3 = 'https://192.168.1.44:8452'; // not exist
 const clientUserId_1 = 'user1@gmail.com';
@@ -21,37 +21,18 @@ const encMinutiae_3 = '625b7097d609ec8f5b48eef448414528e6a78f2f7cdec8352758eb9cf
 const eSkey = '00c35f1fd3e3b761d4c0b318b2c657c0c0348f35a8183f26943545ad424545475c68330f301f05e3319ff2001f82aafbb7f7400e686f42d1a565cee8b57e86249b57001cddb96e545ad796467e884b72b494db1c40d6d73783a8aa1293dac4b90534e995741f696af5bb78a360c04230f51bcbc55069ebac52a8274cd762ef3290e9327ed4df672e3b62ee627615f5a3108cdcf83d102269e69f8d95ef8f26c0eb9b68293504dfcadd1e4642e538a3a560e744e47f26681395813fdd0f7acc6324beda92d5be486c9edacd4555f1a88b268edf44087947594b7b364a0d38618e9647dccd9cc54d3856845e6a3067fd46945b33865a59319b9d5cf651a4fa0b8f';
 const iv = '000102030405060708090A0B0C0D0E0F';
 
+// Using setTimeout to let the server run setupBioserver() before tests.
+beforeEach(function (done) {
+  setTimeout(function () {
+    done();
+  }, 500);
+});
+
 describe('POST /redirect/addBioserver', () => {
-  it('should add a new Bioserver successfully.', (done) => {
-    request(app)
-      .post('/redirect/addBioserver')
-      .send({bsIP: bioserverIP_1})
-      .expect(200)
-      .expect((res) => {
-        expect(res.body).toMatchObject({
-          code: 20005,
-          message: 'New bioserver has been saved.'
-        });
-        expect(res.body.data.bsId).toBe(1);
-        expect(res.body.data.version).toBeTruthy();
-      })
-      .end((err) => {
-        if (err) {
-          return done(err);
-        }
-        BioserverId.find().then((bioservers) => {
-          expect(bioservers.length).toBe(1);
-          expect(bioservers[0].bsIP).toBe(bioserverIP_1);
-          expect(bioservers[0].bsId).toBe(1);
-          expect(bioservers[0].count).toBe(0);
-          expect(RedirectData.bioservers.length).toBe(1);
-          expect(RedirectData.bioservers[0].bsIP).toBe(bioserverIP_1);
-          expect(RedirectData.bioservers[0].bsId).toBe(1);
-          expect(RedirectData.bioservers[0].count).toBe(0);
-          done();
-        }).catch((err) => done(err));
-      });
-  });
+/**
+ * After server is on, there should be a default Bioserver connected
+ * and the IP is the same as bioserverIP_1.
+ */
 
   it('should not add a Bioserver which is already connected.', (done) => {
     request(app)
