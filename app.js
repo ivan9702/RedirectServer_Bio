@@ -14,6 +14,7 @@ const i18nMiddleware = require('i18next-express-middleware');
 
 var {mongoose} = require('./db/mongoose');
 const {EventLog} = require('./models/eventLog');
+const {Statistics} = require('./models/statistics');
 var index = require('./routes/index');
 var redirect = require('./routes/redirect');
 
@@ -44,7 +45,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(mung.json(
   function transform(body, req, res) {
-    res.on('finish', () => {
+    res.on('finish', async function() {
       if (req.baseUrl === '/redirect' && (req.path !== '/' && req.path.substring(0,7) !== '/getLog' && req.path.substring(0,7) !== '/getBio')) {
         const reqPath = req.path;
         const clientUserId = (req.body.clientUserId) ? req.body.clientUserId : null;
@@ -53,73 +54,56 @@ app.use(mung.json(
         const userInfo = {clientUserId, fpIndex, userId};
         const resBody = body;
         const bsId = (req.logInfo && req.logInfo.bsId) ? req.logInfo.bsId : null;
-        let eventTime = new Date();
+        const eventTime = new Date();
 
-        let newEventLog = new EventLog({reqPath, userInfo, resBody, bsId, eventTime: eventTime.toUTCString()});
-        newEventLog.save().then(() => {
-          if (eventTime.yyyymmdd() != BrowserInfo.today){
-            updateStatistics();
+        const newEventLog = new EventLog({
+          reqPath,
+          userInfo,
+          resBody,
+          bsId,
+          eventTime: eventTime.toUTCString()
+        });
+        try {
+          await newEventLog.save();
+          // update totalXXXAmount
+          BrowserInfo.totalAPICallAmount++;
+          if (resBody.code > 40000) {
+            BrowserInfo.totalErrCallAmount++;
+          }
+          switch (reqPath) {
+            case "/enroll":
+              BrowserInfo.totalEnrollAmount++;
+              break;
+            case "/delete":
+              BrowserInfo.totalDeleteAmount++;
+              break;
+            case "/verify":
+              BrowserInfo.totalVerifyAmount++;
+              break;
+            case "/identify":
+              BrowserInfo.totalIdentifyAmount++;
+              break;
+          }
+          if (eventTime.yyyymmdd() != BrowserInfo.todayDate.yyyymmdd()) {
+            updateStatistics({
+              reqPath: reqPath,
+              resCode: resBody.code,
+              eventTime: eventTime
+            });
             console.log('not the same');
           } else {
-            BrowserInfo.totalAPICallAmount++;
-            BrowserInfo.todayAPICallAmount++;
-
-            if (resBody.code > 40000) {
-              BrowserInfo.totalErrCallAmount++;
-              BrowserInfo.todayErrCallAmount++;
-              BrowserInfo.sevenDayError[0]++;
-            }
-
-            switch(resBody.code){
-              case 20001:
-              case 20002:
-              case 20003:
-              case 20004:
-              case 20005:
-              case 20006:
-                BrowserInfo.today200Amount++;
-                break;
-              case 40301:
-                BrowserInfo.today403Amount++;
-                break;
-              case 40401:
-              case 40402:
-              case 40403:
-                BrowserInfo.today404Amount++;
-                break;
-              case 40601:
-              case 40602:
-              case 40603:
-              case 40604:
-                BrowserInfo.today406Amount++;
-                break;
-              case 50101:
-              case 50102:
-                BrowserInfo.today501Amount++;
-                break;
-            }
-            switch(reqPath){
-              case "/enroll":
-                BrowserInfo.sevenDayEnroll[0]++;
-                BrowserInfo.totalEnrollAmount++;
-                break;
-              case "/delete":
-                BrowserInfo.sevenDayDelete[0]++;
-                BrowserInfo.totalDeleteAmount++;
-                break;
-              case "/verify":
-                BrowserInfo.sevenDayVerify[0]++;
-                BrowserInfo.totalVerifyAmount++;
-                break;
-              case "/identify":
-                BrowserInfo.sevenDayIdentify[0]++;
-                BrowserInfo.totalIdentifyAmount++;
-                break;
-            }
+            updateTodaysStatistics(reqPath, resBody.code);
+            const copyObj = Object.assign({}, BrowserInfo);
+            await Statistics.findOneAndUpdate({index: 1}, {
+              $set: {
+                browserInfo: copyObj,
+                updateTime: eventTime.toUTCString()
+              }
+            });
           }
-        }).catch((err) => {
-          console.log('ERROR: ', err);
-        });
+        } catch (e) {
+          console.log(e);
+        }
       } else {
         return;
       }
