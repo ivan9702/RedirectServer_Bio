@@ -15,6 +15,7 @@ const {UserFP} = require('./../models/userFP');
 const {sslOptions} = require('./../sslLicense');
 const {EventLog} = require('./../models/eventLog');
 const {config} = require('./../readConfig');
+const {Statistics} = require('./../models/statistics');
 
 /**
  * Global variables.
@@ -35,6 +36,15 @@ Date.prototype.yyyymm = function() {
 
   return yyyy + '-' + (mm[1]?mm:"0"+mm[0]);
 };
+
+Array.prototype.shiftRight = function (offset) {
+  if (offset >= this.length) {
+    offset = this.length;
+  }
+  this.splice(this.length - offset, offset);
+  this.splice(0, 0, ...new Array(offset).fill(0));
+  return this;
+}
 
 numberWithCommas = function(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -68,7 +78,7 @@ RedirectData = {
 };
 
 BrowserInfo = {
-  today: '',
+  todayDate: new Date(),
   totalAPICallAmount: 0,
   todayAPICallAmount: 0,
   totalFPAmount: 0,
@@ -86,150 +96,146 @@ BrowserInfo = {
   today501Amount: 0,
   allMonths: [],
   sevenDays: [],
-  sevenDayEnroll: [0,0,0,0,0,0,0],
-  sevenDayDelete: [0,0,0,0,0,0,0],
-  sevenDayVerify: [0,0,0,0,0,0,0],
-  sevenDayIdentify: [0,0,0,0,0,0,0],
-  sevenDayError: [0,0,0,0,0,0,0],
+  weeklyInfo: null,
   version: 'v1.1.0'
 };
 
-function resetBrowserInfo() {
-  BrowserInfo.today = '';
-  BrowserInfo.totalAPICallAmount = 0;
+function resetTodaysStatistics() {
   BrowserInfo.todayAPICallAmount = 0;
-  BrowserInfo.totalErrCallAmount = 0;
   BrowserInfo.todayErrCallAmount = 0;
-  BrowserInfo.totalIdentifyAmount = 0;
-  BrowserInfo.totalVerifyAmount = 0;
-  BrowserInfo.totalEnrollAmount = 0;
-  BrowserInfo.totalDeleteAmount = 0;
   BrowserInfo.today200Amount = 0;
   BrowserInfo.today403Amount = 0;
   BrowserInfo.today404Amount = 0;
   BrowserInfo.today406Amount = 0;
   BrowserInfo.today501Amount = 0;
-  BrowserInfo.allMonths = [];
-  BrowserInfo.sevenDays = [];
-  BrowserInfo.sevenDayEnroll = [0,0,0,0,0,0,0];
-  BrowserInfo.sevenDayDelete = [0,0,0,0,0,0,0];
-  BrowserInfo.sevenDayVerify = [0,0,0,0,0,0,0];
-  BrowserInfo.sevenDayIdentify = [0,0,0,0,0,0,0];
-  BrowserInfo.sevenDayError = [0,0,0,0,0,0,0];
 }
 
-updateStatistics = function() {
-  resetBrowserInfo();
-  let todayDate = new Date();
-  todayDate.setHours(0,0,0,0);
+function resetWeeklyStatistics() {
+  BrowserInfo.weeklyInfo = new Array(5);
+  for (let i = 0; i < BrowserInfo.weeklyInfo.length; i++) {
+    BrowserInfo.weeklyInfo[i] = new Array(7).fill(0);
+  }
+}
 
-  let currentDate = todayDate.yyyymmdd();
-  let currentMonth = todayDate.yyyymm();
-  BrowserInfo.today = currentDate;
-  BrowserInfo.sevenDays = get7days(todayDate);
-  BrowserInfo.allMonths[0] = currentMonth;
-  let currentLogDateObj = new Date(todayDate);
-
-  EventLog.find({}, null, {sort: {eventTime: -1}}).then((eventlogs) => {
-    let initialPosition = 0;
-    eventlogs.forEach((eventlog) => {
-      BrowserInfo.totalAPICallAmount++;
-      if (eventlog.resBody.code > 40000) {
-        BrowserInfo.totalErrCallAmount++;
-      }
-      if(eventlog.eventTime.yyyymm() != currentMonth){
-        currentMonth = eventlog.eventTime.yyyymm();
-        BrowserInfo.allMonths.push(currentMonth);
-      }
-
-      if (eventlog.eventTime > todayDate) {
-        // today's log
-        BrowserInfo.todayAPICallAmount++;
-        if (eventlog.resBody.code > 40000) {
-          BrowserInfo.todayErrCallAmount++;
-        }
-        switch(eventlog.resBody.code){
-          case 20001:
-          case 20002:
-          case 20003:
-          case 20004:
-            BrowserInfo.today200Amount++;
-            break;
-          case 40301:
-          case 40302:
-            BrowserInfo.today403Amount++;
-            break;
-          case 40401:
-          case 40402:
-          case 40403:
-          case 40404:
-            BrowserInfo.today404Amount++;
-            break;
-          case 40601:
-          case 40602:
-          case 40603:
-          case 40604:
-          case 40605:
-            BrowserInfo.today406Amount++;
-            break;
-          case 50101:
-          case 50102:
-          case 50103:
-            BrowserInfo.today501Amount++;
-            break;
-        }
-      } else {
-        if (eventlog.eventTime.yyyymmdd() !== currentDate){
-          // Date in the log changed
-          let basedDate = new Date(eventlog.eventTime);
-          basedDate.setHours(0,0,0,0);
-          // find the difference between 2 dates
-          var dayDiff =  dateDiffInDays(basedDate, currentLogDateObj);
-          initialPosition += dayDiff;
-          currentDate = eventlog.eventTime.yyyymmdd();
-          currentLogDateObj = new Date(eventlog.eventTime);
-        }
-      }
-
-      switch(eventlog.reqPath){
-        case "/verify":
-          BrowserInfo.totalVerifyAmount++;
-          break;
-        case "/identify":
-          BrowserInfo.totalIdentifyAmount++;
-          break;
-        case "/enroll":
-          BrowserInfo.totalEnrollAmount++;
-          break;
-        case "/delete":
-          BrowserInfo.totalDeleteAmount++;
-          break;
-      }
-
-      if (initialPosition < 7) {
-        if (eventlog.resBody.code > 40000) {
-          BrowserInfo.sevenDayError[initialPosition]++;
-        }
-        switch(eventlog.reqPath){
-          case "/enroll":
-            BrowserInfo.sevenDayEnroll[initialPosition]++;
-            break;
-          case "/delete":
-            BrowserInfo.sevenDayDelete[initialPosition]++;
-            break;
-          case "/verify":
-            BrowserInfo.sevenDayVerify[initialPosition]++;
-            break;
-          case "/identify":
-            BrowserInfo.sevenDayIdentify[initialPosition]++;
-            break;
-        }
-      }
-    });
-    console.log(BrowserInfo);
-  }).catch((err) => {
-    console.log(err);
+function updateWeeklyStatistics(offset) {
+  BrowserInfo.weeklyInfo.forEach((arr) => {
+    arr.shiftRight(offset);
   });
+}
+
+function commonUpdateProcedure(date1, date2) {
+  resetTodaysStatistics();
+  const dayDiff = dateDiffInDays(date1, date2);
+  if (6 < dayDiff) {
+    resetWeeklyStatistics();
+  } else {
+    updateWeeklyStatistics(dayDiff);
+  }
+}
+
+updateTodaysStatistics = function (reqPath, resCode) {
+  BrowserInfo.todayAPICallAmount++;
+  switch (reqPath) {
+    case "/enroll":
+      BrowserInfo.weeklyInfo[0][0]++;
+      break;
+    case "/delete":
+      BrowserInfo.weeklyInfo[1][0]++;
+      break;
+    case "/verify":
+      BrowserInfo.weeklyInfo[2][0]++;
+      break;
+    case "/identify":
+      BrowserInfo.weeklyInfo[3][0]++;
+      break;
+  }
+  switch (resCode) {
+    case 20001:
+    case 20002:
+    case 20003:
+    case 20004:
+    case 20005:
+    case 20006:
+      BrowserInfo.today200Amount++;
+      break;
+    case 40301:
+    case 40302:
+      BrowserInfo.today403Amount++;
+      break;
+    case 40401:
+    case 40402:
+    case 40403:
+    case 40404:
+    case 40405:
+      BrowserInfo.today404Amount++;
+      break;
+    case 40601:
+    case 40602:
+    case 40603:
+    case 40604:
+    case 40605:
+    case 40606:
+      BrowserInfo.today406Amount++;
+      break;
+    case 50101:
+    case 50102:
+    case 50103:
+      BrowserInfo.today501Amount++;
+      break;
+  }
+  if (resCode > 40000) {
+    BrowserInfo.weeklyInfo[4][0]++;
+    BrowserInfo.todayErrCallAmount++;
+  }
+}
+
+updateStatistics = async function(option) {
+  let existFlag = 0;
+  if (option) {
+    existFlag = 1;
+    commonUpdateProcedure(BrowserInfo.todayDate, option.eventTime);
+    updateTodaysStatistics(option.reqPath, option.resCode);
+  } else {
+    // start server
+    const todayDate = new Date();
+    todayDate.setHours(0,0,0,0);
+    const storedData = await Statistics.find({});
+    if (1 === storedData.length) {
+      existFlag = 1;
+      BrowserInfo = Object.assign({}, storedData[0].browserInfo);
+      if (BrowserInfo.todayDate.yyyymmdd() !== todayDate.yyyymmdd()) {
+        commonUpdateProcedure(BrowserInfo.todayDate, todayDate);
+      }
+    } else {
+      // clean Redirect server
+      resetWeeklyStatistics();
+    }
+  }
+  BrowserInfo.todayDate = new Date();
+  BrowserInfo.todayDate.setHours(0,0,0,0);
+  BrowserInfo.sevenDays = get7days(BrowserInfo.todayDate);
+  // console.log(BrowserInfo);
+  try {
+    const updateTime = option ? option.eventTime : new Date();
+    const infoObj = Object.assign({}, BrowserInfo);
+    if (1 === existFlag) {
+      await Statistics.findOneAndUpdate({index: 1}, {
+        $set: {
+          browserInfo: infoObj,
+          updateTime: updateTime.toUTCString()
+        }
+      });
+    } else {
+      const updatedData = new Statistics({
+        index: 1,
+        browserInfo: infoObj,
+        updateTime: updateTime.toUTCString()
+      });
+      await updatedData.save();
+    }
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 /**
