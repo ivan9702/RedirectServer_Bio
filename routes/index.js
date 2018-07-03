@@ -4,8 +4,9 @@ var router = express.Router();
 /* GET home page. */
 router.get('/', function(req, res, next) {
   let sum = [0,0,0,0,0,0,0];
-  for (let i = 0; i < BrowserInfo.sevenDayEnroll.length; ++i) {
-    sum[i] = BrowserInfo.sevenDayEnroll[i] + BrowserInfo.sevenDayDelete[i];
+  for (let i = 0; i < BrowserInfo.weeklyInfo[0].length; ++i) {
+    // enroll & delete
+    sum[i] = BrowserInfo.weeklyInfo[0][i] + BrowserInfo.weeklyInfo[1][i];
   }
   let FPCount = 0;
   RedirectData.bioservers.forEach((bioserver) => {
@@ -43,11 +44,11 @@ router.get('/', function(req, res, next) {
     totalOthersPercentage: BrowserInfo.totalAPICallAmount === 0 ? 0 : Math.round(((BrowserInfo.totalAPICallAmount - BrowserInfo.totalIdentifyAmount - BrowserInfo.totalVerifyAmount - BrowserInfo.totalEnrollAmount - BrowserInfo.totalDeleteAmount) / BrowserInfo.totalAPICallAmount)*1000) / 10,
     totalOthersAmountChart: BrowserInfo.totalAPICallAmount - BrowserInfo.totalIdentifyAmount - BrowserInfo.totalVerifyAmount - BrowserInfo.totalEnrollAmount - BrowserInfo.totalDeleteAmount,
     sevenDays: BrowserInfo.sevenDays,
-    sevenDayError: BrowserInfo.sevenDayError,
-    sevenDayVerify: BrowserInfo.sevenDayVerify,
-    sevenDayIdentify: BrowserInfo.sevenDayIdentify,
-    sevenDayDelete: BrowserInfo.sevenDayDelete,
-    sevenDayEnroll: BrowserInfo.sevenDayEnroll,
+    sevenDayEnroll: BrowserInfo.weeklyInfo[0],
+    sevenDayDelete: BrowserInfo.weeklyInfo[1],
+    sevenDayVerify: BrowserInfo.weeklyInfo[2],
+    sevenDayIdentify: BrowserInfo.weeklyInfo[3],
+    sevenDayError: BrowserInfo.weeklyInfo[4],
     sum: sum
   });
 });
