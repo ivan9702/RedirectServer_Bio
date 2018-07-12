@@ -171,111 +171,104 @@ redirect.post('/addBioserver', (req, res) => {
 
 redirect.use(serverExists);
 
-redirect.post('/enroll', (req, res) => {
+redirect.post('/enroll', async (req, res) => {
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId && req.body.fpIndex) {
     req.body.fpIndex = parseInt(req.body.fpIndex, 10);
-    // sort bioservers by count
-    RedirectData.bioservers.sort((a, b) => {
-      return a.count - b.count;
+    let targetIndex = 0;
+    let count;
+
+    /* Find the Bioserver with the min count */
+    RedirectData.bioservers.forEach((bioserver, index) => {
+      if (0 === index) {
+        count = bioserver.count;
+      } else {
+        if (bioserver.count < count) {
+          targetIndex = index;
+          count = bioserver.count;
+        }
+      }
     });
-    // new user
+
+    /* Setup for new user */
     let errorFlag = 1;
     let userId = RedirectData.lastUserId;
-    let bioServerId = RedirectData.bioservers[0].bsId;
-    let addFPIP = RedirectData.bioservers[0].bsIP;
-    UserFP.find({
-      clientUserId: req.body.clientUserId
-    }).then((userFPs) => {
-      if (0 !== userFPs.length) {
-        // user exists
-        if (userFPs.find((userFP) => userFP.fpIndex === req.body.fpIndex)) {
-          // fpIndex exists
+    let bioServerId = RedirectData.bioservers[targetIndex].bsId;
+    let addFPIP = RedirectData.bioservers[targetIndex].bsIP;
+    let isNewUser = 1;
+    const arrIndex = req.body.fpIndex - 1;
+    try {
+      const user = await UserFP.findOne({ clientUserId: req.body.clientUserId });
+      errorFlag = 2;
+      if (user) {
+        if (user.fpIndex[arrIndex]) {
+          /* fpIndex exists */
           throw new Error('FP exists');
         }
-        userId = userFPs[0].userId;
-        bioServerId = userFPs[0].bioServerId;
-        let targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === bioServerId);
+        userId = user.userId;
+        bioServerId = user.bioServerId;
+        const targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === bioServerId);
         addFPIP = targetServer.bsIP;
+        isNewUser = 0;
       }
-      // save userFP & update bioserverId
-      errorFlag = 2;
-      let updatedBsId = BioserverId.findOneAndUpdate({
-        bsId: bioServerId
-      }, {
-        $inc: {count: 1}
-      }, {
-        new: true
-      });
-
-      let newUserFP = new UserFP({
-        clientUserId: req.body.clientUserId,
-        userId: userId,
-        fpIndex: req.body.fpIndex,
-        bioServerId: bioServerId,
-        updated_at: new Date().toUTCString()
-      }).save();
-
-      return Promise.all([newUserFP, updatedBsId]);
-    }).then((results) => {
-      errorFlag = 3;
       req.logInfo.bsId = bioServerId;
-      return axios.post(addFPIP + '/api/addFP', {
+
+      const response = await axios.post(addFPIP + '/api/addFP', {
         userId: userId,
         fpIndex: req.body.fpIndex,
         eSkey: req.body.eSkey,
         iv: req.body.iv,
         encMinutiae: req.body.encMinutiae
-      }, {httpsAgent: agent});
-    }).then((response) => {
-      errorFlag = 4;
+      }, { httpsAgent: agent });
+      errorFlag = 3;
       req.logInfo.userId = userId;
+
       if (20001 === response.data.code) {
+        /* Update RedirectData */
         if (userId === RedirectData.lastUserId) {
           RedirectData.lastUserId++;
         }
-        // update RedirectData.bioservers
-        RedirectData.bioservers.forEach((bioserver) => {
-          if (bioserver.bsId === bioServerId) {
-            bioserver.count++;
-          }
+        const addedServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === bioServerId);
+        addedServer.count++;
+        /* Update BioserverId */
+        await BioserverId.findOneAndUpdate({
+          bsId: bioServerId
+        }, {
+          $inc: {count: 1}
         });
-        res.json({code: response.data.code, message: response.data.message});
-      } else {
-        throw new Error(JSON.stringify({code: response.data.code, message: response.data.message}));
+        errorFlag = 4;
+        /* Update UserFP */
+        if (0 === isNewUser) {
+          const update = {};
+          update['fpIndex.' + arrIndex] = 1;
+          await UserFP.findOneAndUpdate({
+            clientUserId: req.body.clientUserId
+          }, {
+            $set: update
+          });
+        } else {
+          const indexArr = new Array(10).fill(0);
+          indexArr[arrIndex] = 1;
+          const newUserFP = new UserFP({
+            clientUserId: req.body.clientUserId,
+            userId: userId,
+            fpIndex: indexArr,
+            privilege: req.body.privilege ? req.body.privilege : 0,
+            bioServerId: bioServerId,
+            updated_at: new Date().toUTCString()
+          });
+          await newUserFP.save();
+        }
       }
-    }).catch((err) => {
-      // 1. error for UserFP.find
-      // 2. 'FP exists'
-      // 3. error for newUserFP.save() & update bioserverId
-      // 4. axios error -> UserFP.findOneAndRemove
-      // 5. 'bioserver error' -> UserFP.findOneAndRemove
+      res.json({ code: response.data.code, message: response.data.message });
+    } catch (err) {
       if ('FP exists' === err.message) {
         res.json({code: 40605, message: 'User\'s Finger Data Already Exists.'});
-      } else if (3 === errorFlag || 4 === errorFlag) {
-        let recoverBioserId = BioserverId.findOneAndUpdate({bsId: bioServerId}, {$inc: {count: -1}}, {new: true});
-        let recoverUserFP = UserFP.findOneAndRemove({
-          clientUserId: req.body.clientUserId,
-          userId: userId,
-          fpIndex: req.body.fpIndex,
-          bioServerId: bioServerId
-        });
-        Promise.all([recoverBioserId, recoverUserFP]).then(() => {
-          throw new Error('501');
-        }).catch((error) => {
-          if (3 === errorFlag) {
-            res.json({code: 50103, message: 'An Error happens when Linking Bioserver.'});
-          } else if (4 === errorFlag) {
-            let errObj = JSON.parse(err.message);
-            res.json({code: errObj.code, message: errObj.message});
-          } else {
-            res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
-          }
-        });
+      } else if (2 === errorFlag) {
+        res.json({code: 50103, message: 'An Error Happens When Linking Bioserver.'});
       } else {
-        console.log(err);
         res.json({code: 50102, message: 'May be Some Error on MongoDB.'});
       }
-    });
+    }
   } else {
     res.json({code: 40603, message: 'Required Columns Not Fulfilled.'});
   }
