@@ -1,17 +1,25 @@
 const mongoose = require('mongoose');
 
-var UserFPSchema = new mongoose.Schema({
+const UserFPSchema = new mongoose.Schema({
   clientUserId: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   userId: {
     type: Number,
-    required: true
+    required: true,
+    unique: true
   },
   fpIndex: {
+    type: [Number],
+    required: true,
+    default: new Array(10).fill(0)
+  },
+  privilege: {
     type: Number,
-    required: true
+    required: true,
+    default: 0
   },
   bioServerId: {
     type: Number,
@@ -23,6 +31,6 @@ var UserFPSchema = new mongoose.Schema({
   }
 });
 
-var UserFP = mongoose.model('UserFP', UserFPSchema);
+const UserFP = mongoose.model('UserFP', UserFPSchema);
 
 module.exports = {UserFP};
