@@ -300,10 +300,8 @@ redirect.post('/identify', (req, res) => {
       if (0 !== scores.length) {
         let result = candidates[scores.indexOf(Math.max(...scores))];
         UserFP.findOne({
-          userId: result.userId,
-          fpIndex: result.fpIndex
+          userId: result.userId
         }).then((userFP) => {
-          // let targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === userFP.bioServerId);
           req.logInfo.bsId = userFP.bioServerId;
           req.logInfo.userId = userFP.userId;
           res.json({
