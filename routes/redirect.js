@@ -385,41 +385,47 @@ redirect.post('/delete', async (req, res) => {
     let errorFlag = 0;
     req.body.fpIndex = parseInt(req.body.fpIndex, 10);
     const conditions = {clientUserId: req.body.clientUserId};
+    const arrIndex = req.body.fpIndex - 1;
     try {
-      const userFPs = await UserFP.find(conditions);
+      const userFP = await UserFP.findOne(conditions);
       errorFlag = 1;
-      if (userFPs.length > 0) {
-        if (0 !== req.body.fpIndex) {
-          const targetFpIndexExist = userFPs.some((userFP) => userFP.fpIndex === req.body.fpIndex);
-          if (!targetFpIndexExist) {
-            throw new Error('FP not exist');
-          }
-          conditions['fpIndex'] = req.body.fpIndex;
+      if (userFP) {
+        if (arrIndex >= 0 && userFP.fpIndex[arrIndex] === 0) {
+          throw new Error('FP not exist');
         }
-        // Find the target Bioserver's IP
-        const targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === userFPs[0].bioServerId);
-        req.logInfo.bsId = userFPs[0].bioServerId;
+        /* Find the target Bioserver's IP */
+        const targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === userFP.bioServerId);
+        req.logInfo.bsId = userFP.bioServerId;
         const response = await axios.post(
           targetServer.bsIP + '/api/deleteFP',
-          {userId: userFPs[0].userId, fpIndex: req.body.fpIndex},
+          {userId: userFP.userId, fpIndex: req.body.fpIndex},
           {httpsAgent: agent}
         );
         errorFlag = 2;
-        req.logInfo.userId = userFPs[0].userId;
+        req.logInfo.userId = userFP.userId;
         const resObj = {};
         if (20002 === response.data.code || 20006 === response.data.code || 40401 === response.data.code || 40402 === response.data.code) {
-          const removeResult = await UserFP.remove(conditions);
+          const fpNum = userFP.fpIndex.reduce((pre, cur) => pre + cur, 0);
+          if (1 === fpNum || -1 === arrIndex) {
+            /* No FP left after deletion */
+            await UserFP.findOneAndRemove(conditions);
+          } else {
+            const update = {};
+            update['fpIndex.' + arrIndex] = 0;
+            await UserFP.findOneAndUpdate(conditions, {$set: update});
+          }
           errorFlag = 3;
-          // update BioserverId
+          /* Update BioserverId */
+          const deletedFPNum = (-1 === arrIndex) ? fpNum : 1;
           await BioserverId.findOneAndUpdate(
-            {bsId: userFPs[0].bioServerId},
-            {$inc: {count: -removeResult.result.n}}
+            {bsId: userFP.bioServerId},
+            { $inc: {count: -deletedFPNum} }
           );
           errorFlag = 4;
-          targetServer.count -= removeResult.result.n;
+          targetServer.count -= deletedFPNum;
           resObj.data = {leftFPNum: 0};
           if (0 !== req.body.fpIndex) {
-            resObj.data.leftFPNum = userFPs.length - 1;
+            resObj.data.leftFPNum = fpNum - 1;
           }
         }
         resObj.code = response.data.code;
