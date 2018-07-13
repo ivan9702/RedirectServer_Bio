@@ -335,16 +335,16 @@ redirect.post('/verify', (req, res) => {
   let userIdForLog;
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId) {
     let errorFlag = 0;
-    UserFP.find({
+    UserFP.findOne({
       clientUserId: req.body.clientUserId
     }).then((user) => {
       errorFlag = 1;
-      if (0 !== user.length) {
-        const verifyServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === user[0].bioServerId);
+      if (user) {
+        const verifyServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === user.bioServerId);
         req.logInfo.bsId = verifyServer.bsId;
-        userIdForLog = user[0].userId;
+        userIdForLog = user.userId;
         return axios.post(verifyServer.bsIP + '/api/verifyFP', {
-          userId: user[0].userId,
+          userId: user.userId,
           eSkey: req.body.eSkey,
           iv: req.body.iv,
           encMinutiae: req.body.encMinutiae
