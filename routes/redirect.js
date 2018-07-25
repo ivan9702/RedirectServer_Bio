@@ -310,7 +310,8 @@ redirect.post('/identify', (req, res) => {
             data: {
               clientUserId: userFP.clientUserId,
               fpIndex: result.fpIndex,
-              score: result.score
+              score: result.score,
+              privilege: userFP.privilege
             }
           });
         }).catch((err) => {
@@ -335,11 +336,13 @@ redirect.post('/verify', (req, res) => {
   let userIdForLog;
   if (req.body.eSkey && req.body.iv && req.body.encMinutiae && req.body.clientUserId) {
     let errorFlag = 0;
+    let privilege;
     UserFP.findOne({
       clientUserId: req.body.clientUserId
     }).then((user) => {
       errorFlag = 1;
       if (user) {
+        privilege = user.privilege;
         const verifyServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === user.bioServerId);
         req.logInfo.bsId = verifyServer.bsId;
         userIdForLog = user.userId;
@@ -361,7 +364,11 @@ redirect.post('/verify', (req, res) => {
         message: response.data.message
       };
       if (20003 === response.data.code) {
-        result.data = {fpIndex: response.data.data.fpIndex, score: response.data.data.score};
+        result.data = {
+          fpIndex: response.data.data.fpIndex,
+          score: response.data.data.score,
+          privilege: privilege
+        };
       }
       res.json(result);
     }).catch((err) => {
