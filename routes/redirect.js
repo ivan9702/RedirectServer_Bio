@@ -386,51 +386,52 @@ redirect.post('/verify', (req, res) => {
 });
 
 redirect.post('/delete', async (req, res) => {
-  if (req.body.clientUserId && 'fpIndex' in req.body) {
+  if (req.body.clientUserId && req.body.deleteData) {
     let errorFlag = 0;
-    req.body.fpIndex = parseInt(req.body.fpIndex, 10);
     const conditions = {clientUserId: req.body.clientUserId};
-    const arrIndex = req.body.fpIndex - 1;
     try {
       const userFP = await UserFP.findOne(conditions);
       errorFlag = 1;
       if (userFP) {
-        if (arrIndex >= 0 && userFP.fpIndex[arrIndex] === 0) {
-          throw new Error('FP not exist');
-        }
         /* Find the target Bioserver's IP */
         const targetServer = RedirectData.bioservers.find((bioserver) => bioserver.bsId === userFP.bioServerId);
         req.logInfo.bsId = userFP.bioServerId;
         const response = await axios.post(
           targetServer.bsIP + '/api/deleteFP',
-          {userId: userFP.userId, fpIndex: req.body.fpIndex},
+          {userId: userFP.userId, deleteData: req.body.deleteData},
           {httpsAgent: agent}
         );
         errorFlag = 2;
         req.logInfo.userId = userFP.userId;
         const resObj = {};
         if (20002 === response.data.code || 20006 === response.data.code || 40401 === response.data.code || 40402 === response.data.code) {
+          req.body.fpIndex = response.data.fpIndex; // for log
           const fpNum = userFP.fpIndex.reduce((pre, cur) => pre + cur, 0);
-          if (1 === fpNum || -1 === arrIndex) {
+          const arrIndex = response.data.fpIndex - 1;
+          const fpExists = (-1 !== arrIndex && 1 === userFP.fpIndex[arrIndex]) ? true : false;
+
+          if ((1 === fpNum && fpExists) || -1 === arrIndex) {
             /* No FP left after deletion */
             await UserFP.findOneAndRemove(conditions);
-          } else {
+          } else if (fpExists) {
             const update = {};
             update['fpIndex.' + arrIndex] = 0;
             await UserFP.findOneAndUpdate(conditions, {$set: update});
           }
           errorFlag = 3;
           /* Update BioserverId */
-          const deletedFPNum = (-1 === arrIndex) ? fpNum : 1;
-          await BioserverId.findOneAndUpdate(
-            {bsId: userFP.bioServerId},
-            { $inc: {count: -deletedFPNum} }
-          );
-          errorFlag = 4;
-          targetServer.count -= deletedFPNum;
-          resObj.data = {leftFPNum: 0};
-          if (0 !== req.body.fpIndex) {
-            resObj.data.leftFPNum = fpNum - 1;
+          if (fpExists || -1 === arrIndex) {
+            const deletedFPNum = (-1 === arrIndex) ? fpNum : 1;
+            await BioserverId.findOneAndUpdate(
+              {bsId: userFP.bioServerId},
+              { $inc: {count: -deletedFPNum} }
+            );
+            errorFlag = 4;
+            targetServer.count -= deletedFPNum;
+            resObj.data = {leftFPNum: 0};
+            if (fpExists) {
+              resObj.data.leftFPNum = fpNum - 1;
+            }
           }
         }
         resObj.code = response.data.code;
