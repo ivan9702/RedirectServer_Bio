@@ -175,6 +175,7 @@ updateTodaysStatistics = function (reqPath, resCode) {
     case 40604:
     case 40605:
     case 40606:
+    case 40607:
       BrowserInfo.today406Amount++;
       break;
     case 50101:
