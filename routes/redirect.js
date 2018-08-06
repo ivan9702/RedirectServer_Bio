@@ -240,6 +240,10 @@ redirect.post('/enroll', async (req, res) => {
         if (0 === isNewUser) {
           const update = {};
           update['fpIndex.' + arrIndex] = 1;
+          // Update privilege if needed
+          if (user.privilege != req.body.privilege) {
+            update.privilege = req.body.privilege;
+          }
           await UserFP.findOneAndUpdate({
             clientUserId: req.body.clientUserId
           }, {
