@@ -17,6 +17,7 @@ const {EventLog} = require('./models/eventLog');
 const {Statistics} = require('./models/statistics');
 var index = require('./routes/index');
 var redirect = require('./routes/redirect');
+const pubKey = require('./routes/pubKey');
 
 var app = express();
 
@@ -113,6 +114,7 @@ app.use(mung.json(
 
 app.use('/', index);
 app.use('/redirect', redirect);
+app.get('/publicKey', pubKey.getKey);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
