@@ -15,61 +15,10 @@ const {UserFP} = require('./../models/userFP');
 const {sslOptions} = require('./../sslLicense');
 const {EventLog} = require('./../models/eventLog');
 const {config} = require('./../readConfig');
-const {Statistics} = require('./../models/statistics');
 
 /**
  * Global variables.
  */
-
-Date.prototype.yyyymmdd = function() {
-  var yyyy = this.getFullYear().toString();
-  var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
-  var dd  = this.getDate().toString();
-
-  return yyyy + '-' + (mm[1]?mm:"0"+mm[0]) + '-' + (dd[1]?dd:"0"+dd[0]);
-};
-
-Date.prototype.yyyymm = function() {
-  var yyyy = this.getFullYear().toString();
-  var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
-  //var dd  = this.getDate().toString();
-
-  return yyyy + '-' + (mm[1]?mm:"0"+mm[0]);
-};
-
-Array.prototype.shiftRight = function (offset) {
-  if (offset >= this.length) {
-    offset = this.length;
-  }
-  this.splice(this.length - offset, offset);
-  this.splice(0, 0, ...new Array(offset).fill(0));
-  return this;
-}
-
-numberWithCommas = function(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-};
-
-let get7days = function(today){
-  let sevenDays = [];
-  for(let i = 0; i < 7; i++){
-    let dateToPush = new Date(today);
-    dateToPush.setDate(today.getDate() - i);
-    dateToPush = dateToPush.yyyymmdd();
-    sevenDays.push(dateToPush);
-  }
-  return sevenDays;
-};
-
-// a and b are javascript Date objects
-function dateDiffInDays(a, b) {
-  let _MS_PER_DAY = 1000 * 60 * 60 * 24;
-  // Discard the time and time-zone information.
-  let utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
-  let utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
-
-  return Math.floor((utc2 - utc1) / _MS_PER_DAY);
-}
 
 RedirectData = {
   lastUserId: 1,
@@ -78,166 +27,8 @@ RedirectData = {
 };
 
 BrowserInfo = {
-  todayDate: new Date(),
-  totalAPICallAmount: 0,
-  todayAPICallAmount: 0,
-  totalFPAmount: 0,
-  databaseLink: '',
-  totalErrCallAmount: 0,
-  todayErrCallAmount: 0,
-  totalIdentifyAmount: 0,
-  totalVerifyAmount: 0,
-  totalEnrollAmount: 0,
-  totalDeleteAmount: 0,
-  today200Amount: 0,
-  today403Amount: 0,
-  today404Amount: 0,
-  today406Amount: 0,
-  today501Amount: 0,
-  allMonths: [],
-  sevenDays: [],
-  weeklyInfo: null,
   version: 'v1.1.0'
 };
-
-function resetTodaysStatistics() {
-  BrowserInfo.todayAPICallAmount = 0;
-  BrowserInfo.todayErrCallAmount = 0;
-  BrowserInfo.today200Amount = 0;
-  BrowserInfo.today403Amount = 0;
-  BrowserInfo.today404Amount = 0;
-  BrowserInfo.today406Amount = 0;
-  BrowserInfo.today501Amount = 0;
-}
-
-function resetWeeklyStatistics() {
-  BrowserInfo.weeklyInfo = new Array(5);
-  for (let i = 0; i < BrowserInfo.weeklyInfo.length; i++) {
-    BrowserInfo.weeklyInfo[i] = new Array(7).fill(0);
-  }
-}
-
-function updateWeeklyStatistics(offset) {
-  BrowserInfo.weeklyInfo.forEach((arr) => {
-    arr.shiftRight(offset);
-  });
-}
-
-function commonUpdateProcedure(date1, date2) {
-  resetTodaysStatistics();
-  const dayDiff = dateDiffInDays(date1, date2);
-  if (6 < dayDiff) {
-    resetWeeklyStatistics();
-  } else {
-    updateWeeklyStatistics(dayDiff);
-  }
-}
-
-updateTodaysStatistics = function (reqPath, resCode) {
-  BrowserInfo.todayAPICallAmount++;
-  switch (reqPath) {
-    case "/enroll":
-      BrowserInfo.weeklyInfo[0][0]++;
-      break;
-    case "/delete":
-      BrowserInfo.weeklyInfo[1][0]++;
-      break;
-    case "/verify":
-      BrowserInfo.weeklyInfo[2][0]++;
-      break;
-    case "/identify":
-      BrowserInfo.weeklyInfo[3][0]++;
-      break;
-  }
-  switch (resCode) {
-    case 20001:
-    case 20002:
-    case 20003:
-    case 20004:
-    case 20005:
-    case 20006:
-      BrowserInfo.today200Amount++;
-      break;
-    case 40301:
-    case 40302:
-      BrowserInfo.today403Amount++;
-      break;
-    case 40401:
-    case 40402:
-    case 40403:
-    case 40404:
-    case 40405:
-      BrowserInfo.today404Amount++;
-      break;
-    case 40601:
-    case 40602:
-    case 40603:
-    case 40604:
-    case 40605:
-    case 40606:
-    case 40607:
-      BrowserInfo.today406Amount++;
-      break;
-    case 50101:
-    case 50102:
-    case 50103:
-      BrowserInfo.today501Amount++;
-      break;
-  }
-  if (resCode > 40000) {
-    BrowserInfo.weeklyInfo[4][0]++;
-    BrowserInfo.todayErrCallAmount++;
-  }
-}
-
-updateStatistics = async function(option) {
-  let existFlag = 0;
-  if (option) {
-    existFlag = 1;
-    commonUpdateProcedure(BrowserInfo.todayDate, option.eventTime);
-    updateTodaysStatistics(option.reqPath, option.resCode);
-  } else {
-    // start server
-    const todayDate = new Date();
-    todayDate.setHours(0,0,0,0);
-    const storedData = await Statistics.find({});
-    if (1 === storedData.length) {
-      existFlag = 1;
-      BrowserInfo = Object.assign({}, storedData[0].browserInfo);
-      if (BrowserInfo.todayDate.yyyymmdd() !== todayDate.yyyymmdd()) {
-        commonUpdateProcedure(BrowserInfo.todayDate, todayDate);
-      }
-    } else {
-      // clean Redirect server
-      resetWeeklyStatistics();
-    }
-  }
-  BrowserInfo.todayDate = new Date();
-  BrowserInfo.todayDate.setHours(0,0,0,0);
-  BrowserInfo.sevenDays = get7days(BrowserInfo.todayDate);
-  // console.log(BrowserInfo);
-  try {
-    const updateTime = option ? option.eventTime : new Date();
-    const infoObj = Object.assign({}, BrowserInfo);
-    if (1 === existFlag) {
-      await Statistics.findOneAndUpdate({index: 1}, {
-        $set: {
-          browserInfo: infoObj,
-          updateTime: updateTime.toUTCString()
-        }
-      });
-    } else {
-      const updatedData = new Statistics({
-        index: 1,
-        browserInfo: infoObj,
-        updateTime: updateTime.toUTCString()
-      });
-      await updatedData.save();
-    }
-  } catch (e) {
-    console.log(e);
-  }
-}
 
 /**
  * Get port from environment and store in Express.
@@ -392,5 +183,4 @@ function onListening() {
   debug('Listening on ' + bind);
 
   setupBioserver();
-  updateStatistics();
 }
