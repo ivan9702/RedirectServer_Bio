@@ -24,7 +24,7 @@ block content
         .stats-progress.progress
           .progress-bar(style='width: #{todayAPICallPercent}%;')
         .stats-desc
-          | #{t('cumulativeCalls')}：#{totalAPICallAmount} #{t('times')}
+          | #{t('weeklyAPICalls')}：#{totalAPICallAmount} #{t('times')}
     .col-md-4.col-sm-6
       .widget.widget-stats.bg-purple
         .stats-icon.stats-icon-lg
@@ -47,7 +47,7 @@ block content
           small  / #{todayErrCallPercent} %
         .stats-progress.progress
           .progress-bar(style='width: #{todayErrCallPercent}%;')
-        .stats-desc #{t('totalAbnormalCalls')}：#{totalErrCallAmount} #{t('times')}
+        .stats-desc #{t('weeklyAbnormalCalls')}：#{totalErrCallAmount} #{t('times')}
     else
       .widget.widget-stats.bg-black
         .stats-icon.stats-icon-lg
@@ -58,7 +58,7 @@ block content
           small  / #{todayErrCallPercent} %
         .stats-progress.progress
           .progress-bar(style='width: #{todayErrCallPercent}%;')
-        .stats-desc #{t('totalAbnormalCalls')}：#{totalErrCallAmount} #{t('times')}
+        .stats-desc #{t('weeklyAbnormalCalls')}：#{totalErrCallAmount} #{t('times')}
   .row
     .col-md-4
       .panel.panel-inverse(data-sortable-id='index-1')
@@ -100,7 +100,7 @@ block content
         .widget-chart-sidebar.bg-black-darker
           .chart-number
             | #{totalAPICallAmount}
-            small #{t('totalAPICalls')}
+            small #{t('weeklyAPICalls')}
           #visitors-donut-chart(style='height: 160px')
           ul.chart-legend
             li
