@@ -14,7 +14,6 @@ const i18nMiddleware = require('i18next-express-middleware');
 
 var {mongoose} = require('./db/mongoose');
 const {EventLog} = require('./models/eventLog');
-const {Statistics} = require('./models/statistics');
 var index = require('./routes/index');
 var redirect = require('./routes/redirect');
 const pubKey = require('./routes/pubKey');
@@ -66,42 +65,6 @@ app.use(mung.json(
         });
         try {
           await newEventLog.save();
-          // update totalXXXAmount
-          BrowserInfo.totalAPICallAmount++;
-          if (resBody.code > 40000) {
-            BrowserInfo.totalErrCallAmount++;
-          }
-          switch (reqPath) {
-            case "/enroll":
-              BrowserInfo.totalEnrollAmount++;
-              break;
-            case "/delete":
-              BrowserInfo.totalDeleteAmount++;
-              break;
-            case "/verify":
-              BrowserInfo.totalVerifyAmount++;
-              break;
-            case "/identify":
-              BrowserInfo.totalIdentifyAmount++;
-              break;
-          }
-          if (eventTime.yyyymmdd() != BrowserInfo.todayDate.yyyymmdd()) {
-            updateStatistics({
-              reqPath: reqPath,
-              resCode: resBody.code,
-              eventTime: eventTime
-            });
-            console.log('not the same');
-          } else {
-            updateTodaysStatistics(reqPath, resBody.code);
-            const copyObj = Object.assign({}, BrowserInfo);
-            await Statistics.findOneAndUpdate({index: 1}, {
-              $set: {
-                browserInfo: copyObj,
-                updateTime: eventTime.toUTCString()
-              }
-            });
-          }
         } catch (e) {
           console.log(e);
         }
