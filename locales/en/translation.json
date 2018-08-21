@@ -44,5 +44,7 @@
   "date": "Date",
   "scrollDown": "Scroll down to view all info.",
   "bioserverInfo": "Bioserver info",
-  "chooseMonth": "Choose Month"
+  "chooseMonth": "Choose Month",
+  "weeklyAPICalls": "Weekly API Calls",
+  "weeklyAbnormalCalls": "Weekly Abnormal Calls"
 }
