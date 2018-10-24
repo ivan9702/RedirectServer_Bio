@@ -24,10 +24,9 @@
   "bin": "./bin/www",
   "pkg": {
     "assets": [
-      "./public/images/favicon.ico",
       "./views/*",
-      "./public/*",
-      "./locales/*"
+      "./public/**/*",
+      "./locales/**/*"
     ]
   },
   "devDependencies": {
