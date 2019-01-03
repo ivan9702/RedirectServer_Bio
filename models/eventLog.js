@@ -13,6 +13,9 @@ const EventLogSchema = new mongoose.Schema({
   bsId: {
     type: Number
   },
+  resTime: {
+    type: Number
+  },
   eventTime: {
     type: Date, 
     default: Date.toUTCString

@@ -54,6 +54,7 @@ app.use(mung.json(
         const userInfo = {clientUserId, fpIndex, userId};
         const resBody = body;
         const bsId = (req.logInfo && req.logInfo.bsId) ? req.logInfo.bsId : null;
+        const resTime = (req._startAt && res._startAt) ? ((res._startAt[0] - req._startAt[0]) * 1e3 + (res._startAt[1] - req._startAt[1]) * 1e-6).toFixed(3) : null;
         const eventTime = new Date();
 
         const newEventLog = new EventLog({
@@ -61,6 +62,7 @@ app.use(mung.json(
           userInfo,
           resBody,
           bsId,
+          resTime,
           eventTime: eventTime.toUTCString()
         });
         try {
