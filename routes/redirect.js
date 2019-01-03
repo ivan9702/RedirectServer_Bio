@@ -32,6 +32,10 @@ const getDateFromString = function (stringDate) {
   return new Date(targetYear, targetMonth - 1, targetDay, targetHour, targetMinute, 0, 0);
 };
 
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
 var redirect = express.Router();
 const agent = new https.Agent({rejectUnauthorized: false});
 
@@ -83,6 +87,8 @@ redirect.get('/getLog/:page*?', (req, res) => {
           responseCode: eventLog.resBody && eventLog.resBody.code ? eventLog.resBody.code : 0,
           message: eventLog.resBody && eventLog.resBody.message ? eventLog.resBody.message : '',
           bsId: eventLog.bsId ? eventLog.bsId : '',
+          score: eventLog.resBody && eventLog.resBody.data && eventLog.resBody.data.score ? numberWithCommas(eventLog.resBody.data.score) : '',
+          resTime: eventLog.resTime ? eventLog.resTime : '',
           eventTime: eventLog.eventTime ? js_yyyy_mm_dd_hh_mm_ss(eventLog.eventTime) : ''
         };
         if (eventLog.reqPath === '/identify') {
