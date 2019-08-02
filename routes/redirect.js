@@ -218,7 +218,12 @@ redirect.post('/delete', clientUserId.check, async (req, res) => {
         errorFlag = 3;
         /* Update BioserverId */
         if (fpExists || -1 === arrIndex) {
-          const deletedFPNum = (-1 === arrIndex) ? fpNum : 1;
+          let deletedFPNum = 0;
+          if (20002 === response.data.code) {
+            deletedFPNum = 1;
+          } else if (20006 === response.data.code) {
+            deletedFPNum = response.data.data.FPNum;
+          }
           await BioserverId.findOneAndUpdate(
             { bsId: userFP.bioServerId },
             { $inc: { count: -deletedFPNum } }
