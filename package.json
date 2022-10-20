@@ -17,7 +17,7 @@
     "i18next-express-middleware": "^1.1.1",
     "i18next-node-fs-backend": "^1.0.0",
     "jade": "~1.11.0",
-    "mongoose": "^4.12.5",
+    "mongoose": "^4.13.21",
     "morgan": "~1.9.0",
     "serve-favicon": "~2.4.5"
   },
